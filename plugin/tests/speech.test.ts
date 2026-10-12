@@ -1,7 +1,7 @@
 import type { ModelCompleteRequest, ModelCompleteResult } from 'claude-code'
 import { describe, expect, test } from 'claude-code/testing'
 import type { Character } from '../hooks/characters'
-import { catchphrase, cleanReply, fallback, speak, speechPrompt, turnFacts, type Conversation } from '../hooks/speech'
+import { catchphrase, cleanReply, fallback, speak, speechPrompt, turnFacts, type Conversation, type Moment } from '../hooks/speech'
 
 const usage = { input_tokens: 1, output_tokens: 1, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 }
 const client = (complete: (r: ModelCompleteRequest) => ModelCompleteResult | Promise<ModelCompleteResult>) => ({ model: { complete: async (r: ModelCompleteRequest) => complete(r) } })
@@ -13,7 +13,7 @@ const pustema: Character = {
   lines: ['אני רואה... אני רואה צרות!', 'שורה ארוכה מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד'],
 }
 
-const turn = (talk: Conversation, more: { facts?: string; phrase?: string | null; recent?: string[] } = {}) => ({ talk, facts: '', phrase: null, recent: [], ...more })
+const turn = (talk: Conversation, more: { moment?: Moment; facts?: string; phrase?: string | null; recent?: string[] } = {}) => ({ moment: 'done' as Moment, talk, facts: '', phrase: null, recent: [], ...more })
 
 describe('speech', () => {
   test('the system prompt carries the game, the voice and the lines; the prompt the conversation', () => {
@@ -23,12 +23,12 @@ describe('speech', () => {
     expect(p.system).toContain('sees doom')
     expect(p.system).toContain('- אני רואה... אני רואה צרות!')
     expect(p.system).toContain('Speak Hebrew')
-    expect(p.prompt).toBe('The developer asked: fix the build\nClaude answered: Fixed it.')
+    expect(p.prompt).toBe('The developer asked: fix the build\nClaude has finished.\nClaude answered: Fixed it.')
   })
   test('the system prompt lists the catchphrases; a line asked to carry one names it', () => {
     expect(speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null })).system).toContain('Your catchphrases: אוי ואבוי! / הקלפים לא משקרים')
     const p = speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null }, { phrase: 'הקלפים לא משקרים' }))
-    expect(p.prompt).toBe('The developer asked: x\n\nThis time, work in your catchphrase "הקלפים לא משקרים".')
+    expect(p.prompt).toBe('The developer asked: x\nClaude has finished.\n\nThis time, work in your catchphrase "הקלפים לא משקרים".')
     expect(speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null })).prompt).not.toContain('catchphrase')
   })
   test('about two lines in five carry a catchphrase, any of them; a character without any never does', () => {
@@ -44,7 +44,7 @@ describe('speech', () => {
     const p = speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null }, { facts: '1 commit', recent: ['שורה קודמת'] }))
     expect(p.prompt).toContain('What got done: 1 commit')
     expect(p.prompt).toContain('You already said these; say something new:\n- שורה קודמת')
-    expect(speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null })).prompt).toBe('The developer asked: x')
+    expect(speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null })).prompt).toBe('The developer asked: x\nClaude has finished.')
   })
   test('facts count the work and name the checks, and are empty for talk alone', () => {
     expect(turnFacts([{ kind: 'tool' }, { kind: 'tool' }, { kind: 'commit' }, { kind: 'check', key: 'npm test', ok: false }])).toBe('2 tool calls; 1 commit; checks: npm test failed')
@@ -56,9 +56,16 @@ describe('speech', () => {
     expect(seen!.system).toEqual([{ text: speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null })).system, cache: true }])
     expect(seen!.maxTokens).toBe(160)
   })
+  test('the line knows its moment: Claude still at it, something that just happened, or the end of the turn', () => {
+    expect(speechPrompt(pustema, 'he', turn({ prompt: 'fix it', answer: null }, { moment: 'working' })).prompt).toBe('The developer asked: fix it\nClaude is still working on it.')
+    expect(speechPrompt(pustema, 'he', turn({ prompt: 'fix it', answer: null }, { moment: 'event', facts: 'checks: npm test failed' })).prompt)
+      .toBe('The developer asked: fix it\nThis just happened while Claude works: checks: npm test failed')
+    expect(speechPrompt(pustema, 'he', turn({ prompt: 'fix it', answer: 'Done.' }, { facts: '1 commit' })).prompt)
+      .toBe('The developer asked: fix it\nClaude has finished.\nClaude answered: Done.\nWhat got done: 1 commit')
+  })
   test('english keeps the voice and asks for English', () => {
     expect(speechPrompt(pustema, 'en', turn({ prompt: null, answer: null })).system).toContain('Speak English')
-    expect(speechPrompt(pustema, 'en', turn({ prompt: null, answer: null })).prompt).toBe('A quiet turn.')
+    expect(speechPrompt(pustema, 'en', turn({ prompt: null, answer: null })).prompt).toBe('Claude has finished.')
   })
   test('the conversation is cut at 300 characters each', () => {
     const p = speechPrompt(pustema, 'he', turn({ prompt: 'a'.repeat(500), answer: 'b'.repeat(500) }))

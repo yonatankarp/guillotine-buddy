@@ -4,7 +4,7 @@ import { CHARACTERS, type Character } from './characters'
 import { FACES } from './data/faces.generated'
 import { band } from './render/band'
 import { signalsFromTool, type Outcome, type Signal } from './signals'
-import { catchphrase, EXCERPT_MAX, RECENT_MAX, speak, turnFacts, type Language } from './speech'
+import { catchphrase, EXCERPT_MAX, RECENT_MAX, speak, turnFacts, type Language, type Turn } from './speech'
 
 const characterAtom = atom({ plugin: 'guillotine-buddy', key: 'character' } as const, null)
 const bubbleAtom = atom({ plugin: 'guillotine-buddy', key: 'bubble' } as const, null)
@@ -16,6 +16,19 @@ export const COMMAND = 'guillotine'
 /** How often the mouth moves while a new line is said, and how long the saying lasts for its length. */
 export const TALK_TICK_MS = 140
 export const talkMs = (line: string) => Math.min(5000, Math.max(1500, line.length * 60))
+/** A turn still running this long after the prompt gets a line about the ask. */
+export const WORKING_MS = 20_000
+/** Lines in the middle of a turn are at least this far apart, so the character comments rather than chatters. */
+export const CHIME_GAP_MS = 15_000
+
+/** Something worth a word mid-turn: a check's result, a commit, a push, a PR. */
+export const isNotable = (s: Signal) => s.kind === 'check' || s.kind === 'commit' || s.kind === 'push' || s.kind === 'pr'
+
+/** The session's speaking: its lines so far (newest last, so none is said again), when the last came, and whether one is on its way. */
+const voice = { recent: [] as string[], lastAt: 0, isBusy: false }
+
+/** Whether a mid-turn line may come now: none on its way, and the last one long enough ago. */
+export const mayChime = (now: number, v: { lastAt: number; isBusy: boolean } = voice) => !v.isBusy && now - v.lastAt >= CHIME_GAP_MS
 
 /** The characters with a face baked: the roster lists some before their art is in. */
 export const cast = (): Character[] => CHARACTERS.filter(c => FACES[c.id] !== undefined)
@@ -81,8 +94,31 @@ function talk($: EngineInterface, frames: number, until: number) {
 
 /** Puts `c` above the prompt, with nothing said yet. */
 async function meet($: EngineInterface, c: Character) {
+  voice.recent = []
   await update($, characterAtom, () => c.id)
   await update($, bubbleAtom, () => null)
+}
+
+/** The character on screen when one may speak: a person is watching and it is not quiet; null otherwise. */
+async function speaker($: EngineInterface, isInteractive: boolean): Promise<Character | null> {
+  if (!isInteractive || await read($, quietAtom)) return null
+  const id = await read($, characterAtom)
+  return CHARACTERS.find(c => c.id === id) ?? null
+}
+
+/** Has `c` say a line about `turn` and move its mouth; dropped when another character took over meanwhile. */
+async function say($: EngineInterface, model: string, language: Language, c: Character, turn: Omit<Turn, 'phrase' | 'recent'>) {
+  voice.isBusy = true
+  try {
+    const line = await speak(clients($), model, c, language, { ...turn, phrase: catchphrase(c, Math.random), recent: voice.recent })
+    if (!line || (await read($, characterAtom)) !== c.id) return
+    voice.recent = [...voice.recent, line].slice(-RECENT_MAX)
+    voice.lastAt = await $.clock.now()
+    await update($, bubbleAtom, () => line)
+    talk($, FACES[c.id]!.big.talk.length, voice.lastAt + talkMs(line))
+  } finally {
+    voice.isBusy = false
+  }
 }
 
 export const HELP = [
@@ -97,8 +133,9 @@ export const register: Register = (on, options) => {
   const language: Language = options.language === 'en' ? 'en' : 'he'
   let turnPrompt: string | null = null
   let signals: Signal[] = []
-  // The character's lines this session, newest last, so it is told not to say them again.
-  let recent: string[] = []
+  // Which turn is running (0: none), so a line timed for one turn never lands in the next.
+  let turn = 0
+  let turns = 0
   // Until a session.start says otherwise (a reload may not raise one), assume a person is there.
   let isInteractive = true
 
@@ -108,7 +145,7 @@ export const register: Register = (on, options) => {
     const isQuiet = (await $.store.get('quiet')) === true
     await update($, quietAtom, () => isQuiet)
     // A reload keeps the session's character; a new session meets a new one.
-    recent = []
+    voice.recent = []
     if (!FACES[(await read($, characterAtom)) ?? '']) await meet($, pick(Math.random))
     return next(e)
   }).catch(($, e, next) => next(e))
@@ -119,14 +156,32 @@ export const register: Register = (on, options) => {
   }).catch(($, e, next) => next(e))
 
   on('prompt.submit', async ($, e, next) => {
-    if (countsAsPrompt(e, e.origin.kind === 'sdk' && await hasAppClient($))) turnPrompt ??= e.text.slice(0, EXCERPT_MAX)
+    if (countsAsPrompt(e, e.origin.kind === 'sdk' && await hasAppClient($))) {
+      turnPrompt ??= e.text.slice(0, EXCERPT_MAX)
+      // A long turn hears from the character while Claude still works on it.
+      if (turn === 0) {
+        const mine = turn = ++turns
+        $.clock.after(WORKING_MS, async () => {
+          if (turn !== mine || !mayChime(await $.clock.now())) return
+          const c = await speaker($, isInteractive)
+          if (c) await say($, model, language, c, { moment: 'working', talk: { prompt: turnPrompt, answer: null }, facts: turnFacts(signals) })
+        })
+      }
+    }
     return next(e)
   }).catch(($, e, next) => next(e))
 
   on('tool.call', async ($, e, next) => {
     const ran = await next(e)
     try {
-      signals.push(...signalsFromTool(String(e.tool), e as unknown as Record<string, unknown>, outcome(ran), ran.text ?? ''))
+      const got = signalsFromTool(String(e.tool), e as unknown as Record<string, unknown>, outcome(ran), ran.text ?? '')
+      signals.push(...got)
+      // A check's result, a commit, a push or a PR gets a word right away, not only at the turn's end.
+      const notable = got.filter(isNotable)
+      if (notable.length > 0 && turn !== 0 && mayChime(await $.clock.now())) {
+        const c = await speaker($, isInteractive)
+        if (c) $.clock.after(0, () => say($, model, language, c, { moment: 'event', talk: { prompt: turnPrompt, answer: null }, facts: turnFacts(notable) }))
+      }
     } catch {}
     return ran
   }).catch(($, e, next) => next(e))
@@ -138,20 +193,10 @@ export const register: Register = (on, options) => {
     const facts = turnFacts(signals)
     turnPrompt = null
     signals = []
+    turn = 0
     // A headless run (-p, the SDK) has no one watching, and a quiet character says nothing: no model call.
-    if (!isInteractive || await read($, quietAtom)) return result
-    const id = await read($, characterAtom)
-    const character = CHARACTERS.find(c => c.id === id)
-    if (!character) return result
-    $.clock.after(0, async () => {
-      const phrase = catchphrase(character, Math.random)
-      const line = await speak(clients($), model, character, language, { talk: conversation, facts, phrase, recent })
-      // The character changed while the model answered: that line was the other one's.
-      if (!line || (await read($, characterAtom)) !== character.id) return
-      recent = [...recent, line].slice(-RECENT_MAX)
-      await update($, bubbleAtom, () => line)
-      talk($, FACES[character.id]!.big.talk.length, (await $.clock.now()) + talkMs(line))
-    })
+    const c = await speaker($, isInteractive)
+    if (c) $.clock.after(0, () => say($, model, language, c, { moment: 'done', talk: conversation, facts }))
     return result
   }).catch(($, e, next) => next(e))
 
@@ -169,7 +214,6 @@ export const register: Register = (on, options) => {
     if (!arg) return { text: current ? `${current.name.he} · ${current.name.en} (${current.game})\n\n${HELP}` : HELP }
     const next = arg === 'next' ? pick(Math.random, id) : findCharacter(arg)
     if (!next) return { text: `No character matches "${arg}".\n\n${HELP}` }
-    recent = []
     await meet($, next)
     return { text: `${next.name.he} · ${next.name.en} (${next.game})` }
   })

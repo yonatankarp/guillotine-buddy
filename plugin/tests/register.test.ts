@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 import { FACES } from '../hooks/data/faces.generated'
-import { cast, countsAsPrompt, findCharacter, nextFrame, pick, talkMs } from '../hooks/register'
+import { cast, CHIME_GAP_MS, countsAsPrompt, findCharacter, isNotable, mayChime, nextFrame, pick, talkMs } from '../hooks/register'
 
 describe('register', () => {
   test('only characters with a baked face are picked, whatever the roll', () => {
@@ -27,6 +27,19 @@ describe('register', () => {
         expect(f).toBeLessThanOrEqual(4)
       }
     }
+  })
+  test('mid-turn lines are spaced out and never overlap one on its way', () => {
+    expect(mayChime(100_000, { lastAt: 0, isBusy: false })).toBe(true)
+    expect(mayChime(CHIME_GAP_MS - 1, { lastAt: 0, isBusy: false })).toBe(false)
+    expect(mayChime(CHIME_GAP_MS, { lastAt: 0, isBusy: false })).toBe(true)
+    expect(mayChime(100_000, { lastAt: 0, isBusy: true })).toBe(false)
+  })
+  test('a check, a commit, a push or a PR is worth a word mid-turn; a plain tool call is not', () => {
+    expect(isNotable({ kind: 'check', key: 'npm test', ok: false })).toBe(true)
+    expect(isNotable({ kind: 'commit' })).toBe(true)
+    expect(isNotable({ kind: 'push' })).toBe(true)
+    expect(isNotable({ kind: 'pr' })).toBe(true)
+    expect(isNotable({ kind: 'tool' })).toBe(false)
   })
   test('talking lasts with the line, between 1.5 and 5 seconds', () => {
     expect(talkMs('hi')).toBe(1500)

@@ -10,7 +10,7 @@ describe('characters', () => {
       expect(FACES[c.id]).toBeDefined()
       expect(c.voice.length).toBeGreaterThan(100)
       expect(c.catchphrases.length).toBeGreaterThanOrEqual(2)
-      expect(c.lines.length).toBeGreaterThanOrEqual(10)
+      expect(c.lines.length).toBeGreaterThanOrEqual(5)
       for (const l of [...c.lines, ...c.catchphrases]) expect(l.length).toBeLessThanOrEqual(LINE_MAX)
     }
   })

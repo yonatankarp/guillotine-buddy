@@ -6,8 +6,19 @@ import type { Signal } from './signals'
 export type { Language }
 /** What the person asked this turn and how Claude's answer began. */
 export type Conversation = { prompt: string | null; answer: string | null }
-/** What the line reacts to: the conversation, what got done, a catchphrase to work in, and the lines already said. */
-export type Turn = { talk: Conversation; facts: string; phrase: string | null; recent: readonly string[] }
+/** When the line is said: while Claude still works on the ask, right after something happened mid-turn, or at the turn's end. */
+export type Moment = 'working' | 'event' | 'done'
+/**
+ * What the line reacts to: the moment, the conversation, what got done (for an event, just that), a catchphrase to work
+ * in, and the lines already said.
+ */
+export type Turn = { moment: Moment; talk: Conversation; facts: string; phrase: string | null; recent: readonly string[] }
+
+const MOMENTS: Record<Moment, string> = {
+  working: 'Claude is still working on it.',
+  event: 'This just happened while Claude works:',
+  done: 'Claude has finished.',
+}
 
 /** How much of the prompt and of the answer the speech model sees. */
 export const EXCERPT_MAX = 300
@@ -21,7 +32,7 @@ export const RECENT_MAX = 8
 /** Room for a Hebrew line, which takes more tokens than its length suggests; the bubble trims it anyway. */
 const MAX_TOKENS = 160
 
-const GAMES = { 'Piposh': 'פיפוש', 'Piposh 2': 'פיפוש 2', 'Rating': 'רייטינג' } as const
+const GAMES = { 'Piposh': 'פיפוש', 'Piposh 2': 'פיפוש 2', 'Rating': 'בתככי הרייטינג' } as const
 
 const excerpt = (text: string | null) => (text ?? '').trim().slice(0, EXCERPT_MAX)
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
@@ -45,7 +56,7 @@ export function catchphrase(c: Character, rand: () => number): string | null {
   return c.catchphrases[Math.floor(rand() * c.catchphrases.length)]!
 }
 
-export function speechPrompt(c: Character, language: Language, { talk, facts, phrase, recent }: Turn): { system: string; prompt: string } {
+export function speechPrompt(c: Character, language: Language, { moment, talk, facts, phrase, recent }: Turn): { system: string; prompt: string } {
   const tongue = language === 'he'
     ? 'Speak Hebrew, in the character\'s own slang and rhythm.'
     : 'Speak English, keeping the character\'s attitude, rhythm and quirks as if dubbed from the Hebrew; a catchphrase stays Hebrew, in Latin letters.'
@@ -54,10 +65,15 @@ export function speechPrompt(c: Character, language: Language, { talk, facts, ph
     c.voice && `Your character: ${c.voice}`,
     c.catchphrases.length > 0 && `Your catchphrases: ${c.catchphrases.join(' / ')}`,
     c.lines.length > 0 && `Lines you said in the game, for your voice. Match their style; never repeat one word for word:\n${c.lines.map(l => `- ${l}`).join('\n')}`,
-    `Reply with one short line (at most 15 words), in character, reacting to what the developer asked and what got done: gloat at a failed check, show off at a passing one. ${tongue} Never quote secrets or code. No quotes, no emoji, no markdown.`,
+    `Reply with one short line (at most 15 words), in character, reacting to the moment: what the developer asked, that Claude is still at it, what just happened or what got done. Gloat at a failed check, show off at a passing one. ${tongue} Never quote secrets or code. No quotes, no emoji, no markdown.`,
   ].filter(Boolean).join('\n\n')
   const asked = excerpt(talk.prompt), answered = excerpt(talk.answer)
-  const said = [asked && `The developer asked: ${asked}`, answered && `Claude answered: ${answered}`, facts && `What got done: ${facts}`].filter(Boolean).join('\n') || 'A quiet turn.'
+  const said = [
+    asked && `The developer asked: ${asked}`,
+    moment === 'event' ? `${MOMENTS.event} ${facts}` : MOMENTS[moment],
+    answered && `Claude answered: ${answered}`,
+    moment !== 'event' && facts && `What got done: ${facts}`,
+  ].filter(Boolean).join('\n')
   const prompt = [
     said,
     recent.length > 0 && `You already said these; say something new:\n${recent.map(l => `- ${l}`).join('\n')}`,

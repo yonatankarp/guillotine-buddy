@@ -77,16 +77,28 @@ def lay_patch(face, patch):
 
 def layered(bitmaps, s):
     """Frames of a face the score assembles: the bare face, its fixed layers, then each mouth, every part drawn with
-    matte ink (its paper see-through), cropped last since the offsets are the bare face's."""
-    base = member(bitmaps, s['face'])
-    for l in s.get('layers', []):
-        part = member(bitmaps, l['member'])
-        base.alpha_composite(clear_white(part) if l.get('ink') == 36 else clear_paper(part), (l['x'], l['y']))
+    matte ink (its paper see-through), cropped last since the offsets are the bare face's. A part may reach past the bare
+    face (a beak): the canvas grows to hold it, and `crop` stays in the bare face's coordinates."""
+    face = member(bitmaps, s['face'])
+    load = lambda p: (p, clear_white(member(bitmaps, p['member'])) if p.get('ink') == 36 else clear_paper(member(bitmaps, p['member'])))
+    layers = [load(l) for l in s.get('layers', [])]
+    mouths = [load(m) for m in [s['rest'], *s['mouths']]]
+    x0 = min([0] + [p['x'] for p, _ in layers + mouths])
+    y0 = min([0] + [p['y'] for p, _ in layers + mouths])
+    x1 = max([face.width] + [p['x'] + im.width for p, im in layers + mouths])
+    y1 = max([face.height] + [p['y'] + im.height for p, im in layers + mouths])
+    base = Image.new('RGBA', (x1 - x0, y1 - y0), (0, 0, 0, 0))
+    base.alpha_composite(face, (-x0, -y0))
+    for p, im in layers:
+        base.alpha_composite(im, (p['x'] - x0, p['y'] - y0))
     frames = []
-    for m in [s['rest'], *s['mouths']]:
+    for p, im in mouths:
         f = base.copy()
-        f.alpha_composite(clear_paper(member(bitmaps, m['member'])), (m['x'], m['y']))
-        frames.append(f.crop(tuple(s['crop'])) if 'crop' in s else f)
+        f.alpha_composite(im, (p['x'] - x0, p['y'] - y0))
+        if 'crop' in s:
+            cx0, cy0, cx1, cy1 = s['crop']
+            f = f.crop((cx0 - x0, cy0 - y0, cx1 - x0, cy1 - y0))
+        frames.append(f)
     return frames
 
 
@@ -94,7 +106,9 @@ def shrink(im, h):
     """Area average to `h` rows; a pixel that was mostly outline goes back to the outline colour so the line work survives."""
     w = round(im.width * h / im.height)
     small = im.resize((w, h), Image.BOX)
-    dark = im.convert('L').point(lambda v: 255 if v < 70 else 0).resize((w, h), Image.BOX)
+    # outline is near-black in every channel: a deep red or blue is a colour, not a line
+    rgb = np.asarray(im)[:, :, :3]
+    dark = Image.fromarray(np.where((rgb < 70).all(axis=2), 255, 0).astype('uint8')).resize((w, h), Image.BOX)
     px, dp = small.load(), dark.load()
     for y in range(h):
         for x in range(w):
