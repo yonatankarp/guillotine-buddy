@@ -4,69 +4,101 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Claude Code plugin](https://img.shields.io/badge/Claude_Code-plugin-d97757)](https://code.claude.com/docs/en/discover-plugins)
 
-A Claude Code plugin that puts a character from Guillotine's Piposh, Piposh 2 and Rating above your prompt. After each turn they react to what you asked and what got done, in their own voice from the game, and their mouth moves while they say it.
+<div dir="rtl">
 
-Each session brings a different character, picked at random from 17:
+**החבר'ה מפיפוש, פיפוש 2 ורייטינג עוברים לגור מעל שורת הפקודה של Claude Code.**
 
-| Piposh | Piposh 2 | Rating |
-| --- | --- | --- |
-| חזי פיפוש, צוציק, קרופניק, פוסטמה, ד"ר מרגורי קול-רם, ישורון, הסחלב הפראי, פריץ פון בז, אדון בנטלי, גברת בנטלי | חתולי, פטרישיה, רינתי, מנהלת המלון | אלימלך אגוז, מנהל המלון, צביקי המתכנת |
+בכל שיחה מגיעה דמות אחרת ממשחקי ההרפתקאות של גיליוטינה, באקראי. אחרי כל תור היא אומרת משפט קצר בקול שלה מהמשחק, ומגיבה למה שביקשתם ולמה שנעשה: בדיקות שנכשלו, קומיט, PR. הפה שלה זז כשהיא מדברת, ומדי פעם נכנס גם משפט המחץ שלה. קיבינימט!
 
-## Install
+</div>
+
+<p align="center"><img src="docs/images/band.svg" width="760" alt="חזי פיפוש מעל שורת הפקודה, בבועה: נו, איך? מפתיע, מה? חשבתי על זה לבד!"></p>
+
+<div dir="rtl">
+
+## התקנה
+
+צריך את [Claude Code](https://code.claude.com/docs) (בטרמינל, באפליקציית הדסקטופ או בעורך). מקלידים בשורת הפקודה שלו את שתי השורות האלה, אחת אחרי השנייה:
+
+</div>
 
 ```
 /plugin marketplace add yonatankarp/guillotine-buddy
 /plugin install guillotine-buddy@guillotine-buddy
 ```
 
-It is active at once. Ignore any "userConfig options not yet set" note: every setting has a default.
+<div dir="rtl">
 
-## Command
+וזהו, הדמות כבר שם. אם מופיעה הודעה על <code dir="ltr">userConfig options not yet set</code>, אפשר להתעלם ממנה: לכל הגדרה יש ברירת מחדל.
 
-In some places Claude Code shows the command as `/guillotine-buddy:guillotine`.
+## איך משתמשים
 
-| Command | What it does |
+לא צריך לעשות כלום: עובדים כרגיל והדמות מגיבה. ואם רוצים לבחור מי מדבר:
+
+| פקודה | מה היא עושה |
 | --- | --- |
-| `/guillotine` | Who is here |
-| `/guillotine next` | Someone else |
-| `/guillotine <name>` | That character, by Hebrew or English name; part of the name is enough |
-| `/guillotine quiet` | Hide the character and stop the lines; again to bring them back. Kept across sessions |
+| <code dir="ltr">/guillotine</code> | מי כאן עכשיו |
+| <code dir="ltr">/guillotine next</code> | מישהו אחר, באקראי |
+| <code dir="ltr">/guillotine צוציק</code> | דמות לפי שם, בעברית או באנגלית. גם חלק מהשם מספיק |
+| <code dir="ltr">/guillotine quiet</code> | הדמות נעלמת ושותקת, גם בשיחות הבאות. עוד פעם, והיא חוזרת |
 
-## Settings
+<p align="center"><img src="docs/images/talking.svg" width="760" alt="חזי פיפוש במנוחה, ולידו הפרצופים שלו בזמן שהוא מדבר"></p>
 
-Change them with `/plugin configure guillotine-buddy@guillotine-buddy`.
+## הגדרות
 
-| Setting | Default | What it does |
+משנים אותן עם:
+
+</div>
+
+```
+/plugin configure guillotine-buddy@guillotine-buddy
+```
+
+<div dir="rtl">
+
+| הגדרה | ברירת מחדל | מה היא עושה |
 | --- | --- | --- |
-| `language` | `he` | `he`: Hebrew, as in the games. `en`: English in the same voice; catchphrases stay Hebrew, in Latin letters |
-| `speechModel` | `haiku` | The model that writes the lines |
+| <code dir="ltr">language</code> | <code dir="ltr">he</code> | <code dir="ltr">he</code>: עברית, כמו במשחקים. <code dir="ltr">en</code>: אנגלית באותו קול, ומשפטי המחץ נשארים בעברית באותיות לטיניות |
+| <code dir="ltr">speechModel</code> | <code dir="ltr">haiku</code> | המודל שכותב את המשפטים של הדמות |
 
-## What the character sees
+## הדמויות
 
-Each turn the speech model gets the first 300 characters of your prompt and of Claude's answer, and what got done: counts of tool calls, commits, pushes and PRs, and check names such as `npm test` with passed or failed. No file contents and no paths. A headless run (`claude -p`, the SDK) makes no call at all, and neither does a quiet character.
+כל דמות כמו שהיא במשחק שלה: הפרצוף מהמשחק עצמו, והמשפטים תומללו מהקול שלה בו.
 
-## Where it looks right
+</div>
 
-In the desktop app and editors the face is the game's own art at its own resolution. In a terminal it is drawn in half-block pixels, and in a terminal too small for the face only the line shows. Terminals without right-to-left support show Hebrew lines reversed: set `language` to `en` there.
+<p align="center"><img src="docs/images/cast.svg" width="760" alt="כל הדמויות, לפי משחק"></p>
 
-## How it was made
+<div dir="rtl">
 
-- **Faces:** `scripts/bake.py` cuts each face and its mouth frames out of the games' own Director casts, using the Director extractor of godot-director-player (a private project), and writes `plugin/hooks/data/faces.generated.ts`. `scripts/faces.json` names, per character, the cast member of the face and its mouths, as whole faces, mouth patches matched onto the face, or parts placed where the game's own score puts them.
-- **Voices:** each character's lines were transcribed from their voice clips in that game, and their persona and catchphrases drafted from those lines. The same character is a different buddy in each game, since they speak differently in each.
+## שאלות
 
-Rebuilding the faces needs the games and Python with Pillow and numpy:
+**העברית מופיעה הפוכה!**
+טרמינלים בלי תמיכה בכתיבה מימין לשמאל הופכים את העברית. באפליקציית הדסקטופ של Claude ובעורכים היא נראית כמו שצריך. בטרמינל כזה אפשר להעביר את <code dir="ltr">language</code> ל-<code dir="ltr">en</code>.
 
-```
-python3 scripts/bake.py --player ~/Projects/godot-director-player
-```
+**למה בטרמינל הפרצוף נראה אחרת?**
+באפליקציה ובעורכים מופיע האיור המקורי מהמשחק, ברזולוציה שלו. בטרמינל הוא מצויר בחצאי משבצות, ובטרמינל קטן מדי לפרצוף מופיע רק המשפט.
 
-## Development
+**לא מוצאים את הפקודה <code dir="ltr">/guillotine</code>?**
+בחלק מהמקומות Claude Code מציג אותה כ-<code dir="ltr">/guillotine-buddy:guillotine</code>. זו אותה פקודה.
 
-```
-claude plugin validate --strict plugin
-claude plugin test plugin
-```
+**יש קול?**
+לא. הדמות מדברת בבועה, והפה שלה זז.
 
-## Licence
+**מה הדמות רואה?**
+בכל תור, המודל שכותב את המשפט מקבל את 300 התווים הראשונים של מה שכתבתם ושל התשובה של Claude, ומה נעשה בתור: כמה פעולות, קומיטים, פושים ו-PRים, ושמות של בדיקות (למשל <code dir="ltr">npm test</code>) ואם עברו או נכשלו. אף פעם לא תוכן של קבצים ולא נתיבים.
 
-The code is MIT. The characters, face art and lines are Guillotine's and are not covered by it: see [NOTICE](NOTICE). This is an unofficial, non-commercial fan project.
+**זה רץ גם כשאף אחד לא מסתכל?**
+לא. בהרצה בלי ממשק (<code dir="ltr">claude -p</code>, ה-SDK) ובמצב <code dir="ltr">quiet</code> הדמות לא נקראת בכלל.
+
+## קרדיטים
+
+הדמויות, השמות, האיורים והמשפטים שייכים לגיליוטינה (Guillotine), מפיפוש, פיפוש 2 ורייטינג. הפרצופים נחתכו מקבצי המשחקים עצמם, והמשפטים תומללו מקטעי הקול שלהם. זהו פרויקט מעריצים לא רשמי ולא מסחרי: הקוד ברישיון [MIT](LICENSE), והדמויות לא כלולות בו. פרטים ב-[NOTICE](NOTICE).
+
+רוצים לעזור? ראו [CONTRIBUTING.md](CONTRIBUTING.md).
+
+</div>
+
+---
+
+*In English:* a Claude Code plugin that puts a character from Guillotine's Israeli adventure games Piposh, Piposh 2 and Rating above your prompt, reacting to each turn in their own voice. Install with the two commands above; set `language` to `en` for English lines. An unofficial, non-commercial fan project: see [NOTICE](NOTICE).
