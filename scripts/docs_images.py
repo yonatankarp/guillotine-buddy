@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / 'docs' / 'images'
-GAMES_HE = {'Piposh': 'פיפוש', 'Piposh 2': 'פיפוש 2', 'Rating': 'רייטינג'}
+GAMES_HE = {'Piposh': 'פיפוש', 'Piposh 2': 'פיפוש 2', 'Rating': 'בתככי הרייטינג'}
 HERO = ('p1-piposh', 'נו, איך? מפתיע, מה? חשבתי על זה לבד!')
 FONT = "system-ui, -apple-system, 'Segoe UI', Arial, 'Noto Sans Hebrew', sans-serif"
 INK, MUTED, PAPER, LINE = '#1f1e1b', '#6b6a63', '#faf9f5', '#e3e1d6'
@@ -179,7 +179,7 @@ def cast_svg(cast, all_faces):
                 row = []
             row.append((c, cw))
         y = flush(row, y)
-    return svg(W, y + 10, ''.join(body), 'הדמויות של גיליוטינה-באדי, לפי משחק')
+    return svg(W, y + 10, ''.join(body), 'הדמויות של guillotine-buddy, לפי משחק')
 
 
 def talking_svg(cast, all_faces):
