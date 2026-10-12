@@ -13,7 +13,7 @@ body:
     id: character
     attributes:
       label: Which character
-      description: '`/guillotine` says who is here'
+      description: '`/piposh` says who is here'
   - type: input
     id: version
     attributes:

@@ -53,8 +53,8 @@ jobs:
           CLAUDE_CONFIG_DIR: ${{ runner.temp }}/claude-config
         run: |
           claude plugin marketplace add "$GITHUB_WORKSPACE"
-          claude plugin install guillotine-buddy@guillotine-buddy
-          cache="$CLAUDE_CONFIG_DIR/plugins/cache/guillotine-buddy/guillotine-buddy"
+          claude plugin install piposh-buddy@piposh-buddy
+          cache="$CLAUDE_CONFIG_DIR/plugins/cache/piposh-buddy/piposh-buddy"
           test -f "$cache"/*/hooks/hooks.json
           if find "$cache" \( -name package.json -o -name node_modules -o -name '*.py' -o -name '.casts' \) | grep .; then
             echo "the installed plugin contains build files" >&2

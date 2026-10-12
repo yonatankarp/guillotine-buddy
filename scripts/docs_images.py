@@ -179,7 +179,7 @@ def cast_svg(cast, all_faces):
                 row = []
             row.append((c, cw))
         y = flush(row, y)
-    return svg(W, y + 10, ''.join(body), 'הדמויות של guillotine-buddy, לפי משחק')
+    return svg(W, y + 10, ''.join(body), 'הדמויות של piposh-buddy, לפי משחק')
 
 
 def talking_svg(cast, all_faces):

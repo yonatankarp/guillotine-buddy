@@ -1,6 +1,6 @@
-# guillotine-buddy
+# piposh-buddy
 
-[![ci](https://github.com/yonatankarp/guillotine-buddy/actions/workflows/ci.yml/badge.svg)](https://github.com/yonatankarp/guillotine-buddy/actions/workflows/ci.yml)
+[![ci](https://github.com/yonatankarp/piposh-buddy/actions/workflows/ci.yml/badge.svg)](https://github.com/yonatankarp/piposh-buddy/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Claude Code plugin](https://img.shields.io/badge/Claude_Code-plugin-d97757)](https://code.claude.com/docs/en/discover-plugins)
 
@@ -31,8 +31,8 @@
 </div>
 
 ```
-/plugin marketplace add yonatankarp/guillotine-buddy
-/plugin install guillotine-buddy@guillotine-buddy
+/plugin marketplace add yonatankarp/piposh-buddy
+/plugin install piposh-buddy@piposh-buddy
 ```
 
 <div dir="rtl">
@@ -45,10 +45,10 @@
 
 | פקודה | מה היא עושה |
 | --- | --- |
-| <code dir="ltr">/guillotine</code> | מי כאן עכשיו |
-| <code dir="ltr">/guillotine next</code> | מישהו אחר, באקראי |
-| <code dir="ltr">/guillotine צוציק</code> | דמות לפי שם, בעברית או באנגלית. גם חלק מהשם מספיק |
-| <code dir="ltr">/guillotine quiet</code> | הדמות נעלמת ושותקת, גם בשיחות הבאות. עוד פעם, והיא חוזרת |
+| <code dir="ltr">/piposh</code> | מי כאן עכשיו |
+| <code dir="ltr">/piposh next</code> | מישהו אחר, באקראי |
+| <code dir="ltr">/piposh צוציק</code> | דמות לפי שם, בעברית או באנגלית. גם חלק מהשם מספיק |
+| <code dir="ltr">/piposh quiet</code> | הדמות נעלמת ושותקת, גם בשיחות הבאות. עוד פעם, והיא חוזרת |
 
 רק תדעו שעל <code dir="ltr">quiet</code> כבר הגישו תלונה:
 
@@ -65,7 +65,7 @@
 </div>
 
 ```
-/plugin configure guillotine-buddy@guillotine-buddy
+/plugin configure piposh-buddy@piposh-buddy
 ```
 
 <div dir="rtl">
@@ -97,8 +97,8 @@
 **למה בטרמינל הפרצוף נראה אחרת?**
 באפליקציה ובעורכים מופיע האיור המקורי מהמשחק, ברזולוציה שלו. בטרמינל הוא מצויר בחצאי משבצות, ובטרמינל קטן מדי לפרצוף מופיע רק המשפט.
 
-**לא מוצאים את הפקודה <code dir="ltr">/guillotine</code>?**
-בחלק מהמקומות Claude Code מציג אותה כ-<code dir="ltr">/guillotine-buddy:guillotine</code>. זו אותה פקודה.
+**לא מוצאים את הפקודה <code dir="ltr">/piposh</code>?**
+בחלק מהמקומות Claude Code מציג אותה כ-<code dir="ltr">/piposh-buddy:piposh</code>. זו אותה פקודה.
 
 **יש קול?**
 לא. הדמות מדברת בבועה והפה שלה זז. את הקול אתם ממילא שומעים בראש.

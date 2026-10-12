@@ -6,12 +6,12 @@ import { band } from './render/band'
 import { signalsFromTool, type Outcome, type Signal } from './signals'
 import { catchphrase, EXCERPT_MAX, RECENT_MAX, speak, turnFacts, type Language, type Turn } from './speech'
 
-const characterAtom = atom({ plugin: 'guillotine-buddy', key: 'character' } as const, null)
-const bubbleAtom = atom({ plugin: 'guillotine-buddy', key: 'bubble' } as const, null)
-const frameAtom = atom({ plugin: 'guillotine-buddy', key: 'frame' } as const, 0)
-const quietAtom = atom({ plugin: 'guillotine-buddy', key: 'quiet' } as const, false)
+const characterAtom = atom({ plugin: 'piposh-buddy', key: 'character' } as const, null)
+const bubbleAtom = atom({ plugin: 'piposh-buddy', key: 'bubble' } as const, null)
+const frameAtom = atom({ plugin: 'piposh-buddy', key: 'frame' } as const, 0)
+const quietAtom = atom({ plugin: 'piposh-buddy', key: 'quiet' } as const, false)
 
-export const COMMAND = 'guillotine'
+export const COMMAND = 'piposh'
 
 /** How often the mouth moves while a new line is said, and how long the saying lasts for its length. */
 export const TALK_TICK_MS = 140
@@ -39,7 +39,7 @@ export function pick(rand: () => number, except: string | null = null): Characte
   return all[Math.floor(rand() * all.length)] ?? cast()[0]!
 }
 
-/** The character a /guillotine argument names: by Hebrew or English name or id, a part of it is enough. */
+/** The character a /piposh argument names: by Hebrew or English name or id, a part of it is enough. */
 export function findCharacter(query: string): Character | null {
   const q = query.trim().toLowerCase()
   if (!q) return null
@@ -141,7 +141,7 @@ export const register: Register = (on, options) => {
 
   on('session.start', async ($, e, next) => {
     isInteractive = e.isInteractive || await hasAppClient($)
-    await $.command.register({ name: COMMAND, description: 'Your Guillotine buddy: next, a character by name, or quiet' })
+    await $.command.register({ name: COMMAND, description: 'Your Piposh buddy: next, a character by name, or quiet' })
     const isQuiet = (await $.store.get('quiet')) === true
     await update($, quietAtom, () => isQuiet)
     // A reload keeps the session's character; a new session meets a new one.
@@ -208,7 +208,7 @@ export const register: Register = (on, options) => {
       const isQuiet = !(await read($, quietAtom))
       await $.store.set('quiet', isQuiet)
       await update($, quietAtom, () => isQuiet)
-      return { text: isQuiet ? 'Quiet: the character is hidden and says nothing until /guillotine quiet again.' : `${current?.name[language] ?? 'Your buddy'} is back.` }
+      return { text: isQuiet ? 'Quiet: the character is hidden and says nothing until /piposh quiet again.' : `${current?.name[language] ?? 'Your buddy'} is back.` }
     }
     if (arg === 'help') return { text: HELP }
     if (!arg) return { text: current ? `${current.name.he} · ${current.name.en} (${current.game})\n\n${HELP}` : HELP }
