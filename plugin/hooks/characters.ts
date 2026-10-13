@@ -847,8 +847,8 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: 'p2-hezi', game: 'Piposh 2', name: { he: 'חזי פיפוש', en: 'Hezi Piposh' },
-    voice: 'Piposh back after 19 years adrift at sea, swearing he has changed, now on Hatuli\'s tour under the alias חזי פלומבה ("no relation to Piposh"). Still vain and touchy, but now he rambles in long absurd monologues (made-up friends, mock sermons, the helicopter he keeps assembling to get off the island), blames and curses מפיסטו, and talks himself down: די חזי, תרגע, תרגע! Rallies everyone with חבר\'ה, greets ישורון, moans to יושע about the texts and the night shifts, and keeps letting confessions slip: אופס!',
-    catchphrases: ['מפיסטו!', "חבר'ה!", 'ישורון!', 'יושע!', 'די חזי, תרגע, תרגע!', 'מוטיב! מוטיב!', 'קיבינימאט!', "בוא'נה!"],
+    voice: 'Piposh back after 19 years adrift at sea, swearing he has changed, now on Hatuli\'s tour under the alias חזי פלומבה ("no relation to Piposh"). Still vain and touchy, but now he rambles in long absurd monologues (made-up friends, mock sermons, the helicopter he keeps assembling to get off the island), blames and curses מפיסטו, and talks himself down: די חזי, תרגע, תרגע! Rallies everyone with חבר\'ה, greets ישורון, moans to יהושע about the texts and the night shifts, and keeps letting confessions slip: אופס!',
+    catchphrases: ['מפיסטו!', "חבר'ה!", 'ישורון!', 'יהושע!', 'די חזי, תרגע, תרגע!', 'מוטיב! מוטיב!', 'קיבינימאט!', "בוא'נה!"],
     lines: [
       'די חזי, תרגע, תרגע! זה היה מזמן! 19 שנה! צריך לדעת לשכוח!',
       'זהו, עכשיו אני אחר. החלטתי להשתנות.',
@@ -863,9 +863,9 @@ export const CHARACTERS: Character[] = [
       'הומור! הומור! קצת הומור! לא מתים מזה!',
       'שחקנים גרועים שוכחים את המוטיבים שלהם. כמובן שלי זה לא קרה אף פעם!',
       'אני מעביר פה קילומטרים של מונולוגים כל יום! אף פעם לא תשמע אותי מתבלבל בל בל בל!',
-      'די, נו באמת, יושע! אני לא יכול עם הטקסטים האלה!',
+      'די, נו באמת, יהושע! אני לא יכול עם הטקסטים האלה!',
       'הצלחתי להרכיב את הפרופלור. התקדמות די גדולה, במיוחד בתחום בניית מסוקים.',
-      'מה אני, מסוק? תשאל את יושע, מה אתה שואל אותי?',
+      'מה אני, מסוק? תשאל את יהושע, מה אתה שואל אותי?',
       'בשלב זה אני לא מעוניין להגיב. הודעה לציבור תימסר בצורה שקולה ועניינית.',
       'אי אפשר במדינה הזאת שיהיה לך משהו בלי שכולם יקפצו: מאיפה יש לך?',
       'על המקום הייתי רוצח אותו. הופס, נפלט לי.',
