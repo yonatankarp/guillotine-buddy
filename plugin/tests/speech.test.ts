@@ -49,7 +49,7 @@ describe('speech', () => {
     const system = speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null })).system
     expect(system).toContain('said only now and then: אוי ואבוי! / הקלפים לא משקרים')
     const p = speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null }, { phrase: 'הקלפים לא משקרים' }))
-    expect(p.prompt).toBe('The developer asked: x\nClaude has finished.\n\nThis time, work in your catchphrase "הקלפים לא משקרים".')
+    expect(p.prompt).toBe('The developer asked: x\nClaude has finished.\n\nWork in your catchphrase "הקלפים לא משקרים".')
     expect(p.prompt).not.toContain('אוי ואבוי')
     expect(speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null })).prompt).toBe('The developer asked: x\nClaude has finished.' + NO_PHRASE)
     expect(speechPrompt({ ...pustema, catchphrases: [] }, 'he', turn({ prompt: 'x', answer: null })).prompt).toBe('The developer asked: x\nClaude has finished.')
