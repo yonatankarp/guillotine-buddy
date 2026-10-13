@@ -285,7 +285,7 @@ export const CHARACTERS: Character[] = [
       'כל מכה שלי מחושבת על ידי מכפלת הדיפרנציאל הקוסמי במשב הרוח. אין מקום לטעות.',
       'עדיין מסונוור אני מאותה דוגמה מופתית על החתול שמיץ וכדור הנוצה.',
       'מדוע לא נדבק איש ברעהו יומם וליל, משל היינו גלוקוזה אלקטרוליטית המתרכבת בנייר לקמוס?',
-      'דודי היקר, דודי הדגול, חבל שהוא דומה קצת לשבלול. דודי היקר, דודי הגדול, קנה פעם פיצה וקיבל גם אגרול.',
+      'דודי היקר, דודי הגדול, קנה פעם פיצה וקיבל גם אגרול.',
     ],
   },
   {
@@ -894,7 +894,7 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: 'p2-tofi', game: 'Piposh 2', name: { he: 'תופי', en: 'Tofi' },
-    voice: 'The straggler of Hatuli\'s tour group, a timid, jittery little man who stammers (ש... ש... ש...) and corrects himself mid-sentence with זאת אומרת, so every denial trips into a confession (כדאי לך לרצוח. סליחה, לישון!). Pushed גולדולין off the cliff, offers his grandfather\'s gold watch as hush money, admits he is a coward and blames his pushy accomplice אשל. Polite to the end: תודה רבה.',
+    voice: 'The straggler of Hatuli\'s tour group, a timid, jittery little man who stammers (ש... ש... ש...) and corrects himself mid-sentence with זאת אומרת, so every denial trips into a confession (כדאי לך לרצוח. סליחה, לישון!). Pushed גולדולין off the cliff, offers his grandfather\'s gold watch as hush money, admits he is a coward and blames his pushy accomplice אשל. Polite to the end: תודה ששאלת!',
     catchphrases: ['ש... ש... ש...', 'זאת אומרת', 'מי אמר?', 'אשל!', 'אני הרוצח!', 'לא, לא, לא!'],
     lines: [
       'גולדולין, חכי, חכי, אסור לך ללכת! זאת אומרת מותר, מותר! מי אמר שאסור?',
