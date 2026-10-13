@@ -1,7 +1,7 @@
 import type { ModelCompleteRequest, ModelCompleteResult } from 'claude-code'
 import { describe, expect, test } from 'claude-code/testing'
 import type { Character } from '../hooks/characters'
-import { catchphrase, cleanReply, examples, fallback, speak, speechPrompt, turnFacts, type Conversation, type Moment } from '../hooks/speech'
+import { catchphrase, cleanReply, examples, fallback, says, speak, speechPrompt, turnFacts, type Conversation, type Moment } from '../hooks/speech'
 
 const usage = { input_tokens: 1, output_tokens: 1, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 }
 const client = (complete: (r: ModelCompleteRequest) => ModelCompleteResult | Promise<ModelCompleteResult>) => ({ model: { complete: async (r: ModelCompleteRequest) => complete(r) } })
@@ -56,6 +56,14 @@ describe('speech', () => {
     const egoz = { ...pustema, catchphrases: ['אמא שלי אומרת ש...', 'זה מזיק מאוד ל... שלי!'] }
     expect(catchphrase(egoz, () => 0, ['אמא שלי אומרת שבאגים זה בריא'])).toBe('זה מזיק מאוד ל... שלי!')
     expect(catchphrase({ ...pustema, catchphrases: ['אוי ואבוי!'] }, () => 0, ['אוי ואבוי!'])).toBe('אוי ואבוי!')
+  })
+  test('a line says a phrase only as whole words: by its opening when cut off, whole for a stammer', () => {
+    expect(says('אויש, נו, די כבר', 'נו')).toBe(true)
+    expect(says('אנחנו הולכים', 'נו')).toBe(false)
+    expect(says('ש... ש... ש... מה שהוא אמר!', 'ש... ש... ש...')).toBe(true)
+    expect(says('שלום לכולם', 'ש... ש... ש...')).toBe(false)
+    expect(says('זה מזיק מאוד לסינוסיטיס שלי!', 'זה מזיק מאוד ל... שלי!')).toBe(true)
+    expect(says("חבר'ה, בואו", "חבר'ה!")).toBe(true)
   })
   test('each call samples up to twelve distinct game lines, a different set for a different roll', () => {
     const many = { ...pustema, lines: Array.from({ length: 30 }, (_, i) => `שורה ${i}`) }

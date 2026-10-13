@@ -52,8 +52,15 @@ export function turnFacts(signals: readonly Signal[]): string {
   return parts.join('; ')
 }
 
-/** The words that mark a catchphrase in a line: its text up to any trailing "...", without punctuation. */
-const core = (phrase: string) => phrase.split(/\.\.\.|…/)[0]!.replace(/[!?.,]/g, '').trim()
+const words = (text: string) => ` ${text.replace(/[!?.,:;…]/g, ' ').replace(/\s+/g, ' ').trim()} `
+/**
+ * Whether a line already says the phrase, as whole words: a phrase cut off by "..." (אמא שלי אומרת ש...) matches by its
+ * opening, a stammer (ש... ש... ש...) whole.
+ */
+export function says(line: string, phrase: string): boolean {
+  const cut = phrase.search(/\.\.\.|…/), opening = words(cut < 0 ? phrase : phrase.slice(0, cut)).trimEnd()
+  return words(line).includes(cut >= 0 && opening.length >= 3 ? opening : words(phrase))
+}
 
 /**
  * The catchphrase this line should carry, or null: a few lines do, so the phrases keep coming without every line
@@ -62,7 +69,7 @@ const core = (phrase: string) => phrase.split(/\.\.\.|…/)[0]!.replace(/[!?.,]/
 export function catchphrase(c: Character, rand: () => number, recent: readonly string[] = []): string | null {
   if (c.catchphrases.length === 0 || rand() >= CATCHPHRASE_CHANCE) return null
   // shortcut: an English line carries the phrase in Latin letters, which this Hebrew match misses; transliterate if English repeats show.
-  const fresh = c.catchphrases.filter(p => !recent.some(l => l.includes(core(p))))
+  const fresh = c.catchphrases.filter(p => !recent.some(l => says(l, p)))
   const pool = fresh.length ? fresh : c.catchphrases
   return pool[Math.floor(rand() * pool.length)]!
 }
