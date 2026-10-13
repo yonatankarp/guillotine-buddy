@@ -50,7 +50,7 @@ export const RECENT_MAX = 8
 /** Room for a Hebrew line, which takes more tokens than its length suggests; the bubble trims it anyway. */
 const MAX_TOKENS = 160
 
-const GAMES = { 'Piposh': 'פיפוש', 'Piposh 2': 'פיפוש 2', 'Rating': 'בתככי הרייטינג' } as const
+export const GAMES = { 'Piposh': 'פיפוש', 'Piposh 2': 'פיפוש 2', 'Rating': 'בתככי הרייטינג' } as const
 
 const excerpt = (text: string | null) => (text ?? '').trim().slice(0, EXCERPT_MAX)
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
@@ -103,7 +103,7 @@ export function examples(c: Character, rand: () => number): string[] {
 
 export function speechPrompt(c: Character, language: Language, { moment, talk, facts, phrase, angle, examples, recent }: Turn): { system: string; prompt: string } {
   const tongue = language === 'he'
-    ? 'Speak Hebrew, in the character\'s own slang and rhythm.'
+    ? 'Speak Hebrew, in the character\'s own slang and rhythm, in Hebrew letters only: no Latin letter anywhere, so a name or a word of the trade is spelled the way it sounds (קלוד, פול, קומיט, טסט).'
     : 'Speak English, keeping the character\'s attitude, rhythm and quirks as if dubbed from the Hebrew; a catchphrase stays Hebrew, in Latin letters.'
   const system = [
     `You are ${c.name.en} (${c.name.he}) from the Israeli adventure game ${c.game} (${GAMES[c.game]}, Guillotine), living in a developer's terminal as their buddy. Each line is a moment of you in a scene from your game, not an assistant's reply: you have your own concerns, grudges and agenda, and the developer's work is just what happens around you.`,
@@ -132,18 +132,21 @@ export function speechPrompt(c: Character, language: Language, { moment, talk, f
 /** Out-of-character openings: the model refusing or explaining instead of speaking. */
 const REFUSAL = /^(i can['’]?t|i cannot|sorry|as an ai)\b/i
 
-export function cleanReply(text: string): string | null {
+/** Latin letters in a Hebrew line: the bubble's right-to-left text turns a mixed line around and it reads scrambled. */
+const LATIN = /[A-Za-z]/
+
+export function cleanReply(text: string, language: Language = 'en'): string | null {
   const first = text.split('\n').map(l => l.trim()).find(l => l.length > 0)
   if (!first) return null
   const unquoted = first.replace(/^["'“”״]+|["'“”״]+$/g, '').trim()
-  if (!unquoted || REFUSAL.test(unquoted) || unquoted.endsWith(':')) return null
+  if (!unquoted || REFUSAL.test(unquoted) || unquoted.endsWith(':') || (language === 'he' && LATIN.test(unquoted))) return null
   return unquoted.slice(0, LINE_MAX)
 }
 
 /** A short line of the character's own, for when the model does not answer; null when it has none in this language. */
 export function fallback(c: Character, language: Language, rand: () => number): string | null {
   if (language !== 'he') return null
-  const short = c.lines.filter(l => l.length <= 60)
+  const short = c.lines.filter(l => l.length <= 60 && !LATIN.test(l))
   return short.length ? short[Math.floor(rand() * short.length)]! : null
 }
 
@@ -153,7 +156,7 @@ export async function speak($: { model: Pick<EngineInterface['model'], 'complete
     const { system, prompt } = speechPrompt(c, language, turn)
     // The persona stays the same all session: cached; the sampled game lines and the conversation change each turn.
     const r = await $.model.complete({ model, system: [{ text: system, cache: true }], prompt, maxTokens: MAX_TOKENS, timeoutMs: SPEECH_TIMEOUT_MS })
-    const line = r.isAnswered ? cleanReply(r.text) : null
+    const line = r.isAnswered ? cleanReply(r.text, language) : null
     if (line) return line
   } catch {}
   return fallback(c, language, Math.random)

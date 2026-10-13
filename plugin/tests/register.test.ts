@@ -18,12 +18,18 @@ describe('register', () => {
     expect(findCharacter('nobody here')).toBeNull()
     expect(findCharacter('  ')).toBeNull()
   })
-  test('the list names everyone who can be met, in Hebrew and English, the one showing marked', () => {
-    const lines = roster('p1-fritz').split('\n')
+  test('the list names everyone who can be met, the one showing marked', () => {
+    const lines = roster('p1-fritz', 'en').split('\n')
     expect(lines.length).toBe(cast().length)
-    for (const c of cast()) expect(lines.some(l => l.includes(c.name.he) && l.includes(c.name.en))).toBe(true)
+    for (const c of cast()) expect(lines.some(l => l.includes(c.name.en))).toBe(true)
     expect(lines.filter(l => l.startsWith('▸'))).toEqual([lines.find(l => l.includes('Fritz'))!])
-    expect(roster(null)).not.toContain('▸')
+    expect(roster(null, 'en')).not.toContain('▸')
+  })
+  test('the list speaks one language: Hebrew has no Latin letter, English no Hebrew one', () => {
+    const he = roster('p1-fritz', 'he')
+    for (const c of cast()) expect(he).toContain(c.name.he)
+    expect(he).not.toMatch(/[A-Za-z]/)
+    expect(roster('p1-fritz', 'en')).not.toMatch(/[\u0590-\u05FF]/)
   })
   test('the mouth always moves: the next frame is never the one showing, and stays in range', () => {
     for (let current = 0; current <= 4; current++) {

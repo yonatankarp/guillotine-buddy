@@ -4,7 +4,7 @@ import { CHARACTERS, type Character } from './characters'
 import { FACES } from './data/faces.generated'
 import { band } from './render/band'
 import { signalsFromTool, type Outcome, type Signal } from './signals'
-import { angle, catchphrase, examples, EXCERPT_MAX, fallback, RECENT_MAX, speak, turnFacts, type Language, type Turn } from './speech'
+import { angle, catchphrase, examples, EXCERPT_MAX, fallback, GAMES, RECENT_MAX, speak, turnFacts, type Language, type Turn } from './speech'
 
 const characterAtom = atom({ plugin: 'piposh-buddy', key: 'character' } as const, null)
 const bubbleAtom = atom({ plugin: 'piposh-buddy', key: 'bubble' } as const, null)
@@ -46,9 +46,12 @@ export function findCharacter(query: string): Character | null {
   return cast().find(c => [c.id, c.name.en, c.name.he].some(n => n.toLowerCase().includes(q))) ?? null
 }
 
+/** Who `c` is and their game, in one language: Hebrew beside English reads scrambled in right-to-left text. */
+export const label = (c: Character, language: Language) => language === 'he' ? `${c.name.he} (${GAMES[c.game]})` : `${c.name.en} (${c.game})`
+
 /** Everyone /piposh can bring, one per line, the one showing marked. */
-export function roster(current: string | null): string {
-  return cast().map(c => `${c.id === current ? '▸' : ' '} ${c.name.he} · ${c.name.en} (${c.game})`).join('\n')
+export function roster(current: string | null, language: Language): string {
+  return cast().map(c => `${c.id === current ? '▸' : ' '} ${label(c, language)}`).join('\n')
 }
 
 /** The next mouth: any frame but the one showing, the resting face among them, so the mouth opens and closes. */
@@ -221,12 +224,12 @@ export const register: Register = (on, options) => {
       return { text: isQuiet ? 'Quiet: the character is hidden and says nothing until /piposh quiet again.' : `${current?.name[language] ?? 'Your buddy'} is back.` }
     }
     if (arg === 'help') return { text: HELP }
-    if (arg === 'list') return { text: roster(id) }
-    if (!arg) return { text: current ? `${current.name.he} · ${current.name.en} (${current.game})\n\n${HELP}` : HELP }
+    if (arg === 'list') return { text: roster(id, language) }
+    if (!arg) return { text: current ? `${label(current, language)}\n\n${HELP}` : HELP }
     const next = arg === 'next' ? pick(Math.random, id) : findCharacter(arg)
     if (!next) return { text: `No character matches "${arg}".\n\n${HELP}` }
     await meet($, next, language)
-    return { text: `${next.name.he} · ${next.name.en} (${next.game})` }
+    return { text: label(next, language) }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {

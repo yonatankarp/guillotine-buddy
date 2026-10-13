@@ -30,7 +30,7 @@ describe('/piposh <name>', () => {
       await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
       await piposh($, 'p1-piposh')
       const ui = await mount($, surface, maxRows, bodyColumns)
-      expect((await piposh($, 'fritz')).text).toContain(fritz.name.en)
+      expect((await piposh($, 'fritz')).text).toBe(`${fritz.name.he} (פיפוש)`)
       // what lies beneath stays, under the band, so another buddy's band shows too
       expect(await ui.find({ text: 'NOTHING' })).toBeDefined()
       const texts = (await ui.findAll({ type: 'Text' })).map(t => t.text.trim()).filter(t => t.length > 2)

@@ -1,6 +1,6 @@
 import type { ModelCompleteRequest, ModelCompleteResult } from 'claude-code'
 import { describe, expect, test } from 'claude-code/testing'
-import type { Character } from '../hooks/characters'
+import { CHARACTERS, type Character } from '../hooks/characters'
 import { angle, ANGLES, catchphrase, cleanReply, examples, fallback, says, speak, speechPrompt, turnFacts, type Conversation, type Moment } from '../hooks/speech'
 
 const usage = { input_tokens: 1, output_tokens: 1, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 }
@@ -126,6 +126,12 @@ describe('speech', () => {
     expect(cleanReply('אני לא יכול לסלוח לך!')).toBe('אני לא יכול לסלוח לך!')
     expect(cleanReply('Here is a line:')).toBeNull()
     expect(cleanReply('')).toBeNull()
+  })
+  test('a Hebrew line with Latin letters in it is dropped, since right-to-left text scrambles it; English keeps them', () => {
+    expect(cleanReply('מחכה לירוק, ואתה מחכה Claude!', 'he')).toBeNull()
+    expect(cleanReply('מחכה לירוק, ואתה מחכה לקלוד!', 'he')).toBe('מחכה לירוק, ואתה מחכה לקלוד!')
+    expect(cleanReply('Waiting on Claude again!', 'en')).toBe('Waiting on Claude again!')
+    for (const c of CHARACTERS) for (const r of [0, 0.25, 0.5, 0.75, 0.9999]) expect(fallback(c, 'he', () => r) ?? '').not.toMatch(/[A-Za-z]/)
   })
   test('the fallback is a short line of the character in Hebrew, nothing in English', () => {
     expect(fallback(pustema, 'he', () => 0.99)).toBe('אני רואה... אני רואה צרות!')
