@@ -7,7 +7,8 @@ tools/director_extract.gd decodes the Director casts. scripts/faces.json names, 
 container, the resting face and its talk frames: whole faces with another mouth (`talk`), mouth
 patches laid over the face where they match it best (`patches`), or, for a face the game assembles from
 parts in its score, a bare `face` with fixed `layers` (eyes; `"ink": 36` makes all of a layer's white clear), a `rest` mouth and talk `mouths`, each at the
-offset the score puts it (sprite position minus registration point), then an optional `crop` box.
+offset the score puts it (sprite position minus registration point), then an optional `crop` box. A duo is one
+`pair` of two such specs, drawn side by side, one of them talking at a time.
 
 Each character comes out twice: `big`, the game's own pixels for surfaces that draw SVG, and `small`,
 SMALL_H pixels tall for the terminal's half-block cells. Talk frames keep only the box where they differ
@@ -157,6 +158,33 @@ def face_data(frames):
     return {'w': int(rest.shape[1]), 'h': int(rest.shape[0]), 'palette': palette, 'rest': pack(rest), 'talk': talk}
 
 
+def face_frames(a, cid, s):
+    """One face's frames, the resting face first, paper cleared."""
+    bitmaps = extract(os.path.expanduser(a.player), a.work, s['game'], s['file'])
+    if 'mouths' in s:
+        frames = layered(bitmaps, s)
+    else:
+        face = member(bitmaps, s['face'])
+        frames = [face] + [member(bitmaps, n) for n in s.get('talk', [])] + [lay_patch(face, member(bitmaps, n)) for n in s.get('patches', [])]
+    if any(f.size != frames[0].size for f in frames):
+        sys.exit(f'{cid}: a talk frame is not the size of its face')
+    return [clear_paper(f) for f in frames]
+
+
+def pair_frames(a, cid, s):
+    """A duo as one buddy: both faces side by side on their chins, at rest, then each one talking while the other rests."""
+    left, right = (face_frames(a, cid, p) for p in s['pair'])
+    gap = s.get('gap', 6)
+    w = left[0].width + gap + right[0].width
+    h = max(left[0].height, right[0].height)
+    def side_by_side(l, r):
+        canvas = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+        canvas.alpha_composite(l, (0, h - l.height))
+        canvas.alpha_composite(r, (l.width + gap, h - r.height))
+        return canvas
+    return [side_by_side(left[0], right[0])] + [side_by_side(l, right[0]) for l in left[1:]] + [side_by_side(left[0], r) for r in right[1:]]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--player', required=True)
@@ -165,15 +193,7 @@ def main():
     spec = json.load(open(os.path.join(ROOT, 'scripts', 'faces.json')))
     faces = {}
     for cid, s in spec.items():
-        bitmaps = extract(os.path.expanduser(a.player), a.work, s['game'], s['file'])
-        if 'mouths' in s:
-            frames = layered(bitmaps, s)
-        else:
-            face = member(bitmaps, s['face'])
-            frames = [face] + [member(bitmaps, n) for n in s.get('talk', [])] + [lay_patch(face, member(bitmaps, n)) for n in s.get('patches', [])]
-        if any(f.size != frames[0].size for f in frames):
-            sys.exit(f'{cid}: a talk frame is not the size of its face')
-        frames = [clear_paper(f) for f in frames]
+        frames = pair_frames(a, cid, s) if 'pair' in s else face_frames(a, cid, s)
         big = frames if frames[0].height <= BIG_MAX_H else [shrink(f, BIG_MAX_H) for f in frames]
         faces[cid] = {'big': face_data(big), 'small': face_data([shrink(f, SMALL_H) for f in frames])}
         print(f"{cid}: {big[0].width}x{big[0].height}, {len(frames) - 1} talk frames, {len(faces[cid]['big']['palette']) - 1} colours")

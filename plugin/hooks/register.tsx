@@ -4,7 +4,7 @@ import { CHARACTERS, type Character } from './characters'
 import { FACES } from './data/faces.generated'
 import { band } from './render/band'
 import { signalsFromTool, type Outcome, type Signal } from './signals'
-import { catchphrase, examples, EXCERPT_MAX, RECENT_MAX, speak, turnFacts, type Language, type Turn } from './speech'
+import { catchphrase, examples, EXCERPT_MAX, fallback, RECENT_MAX, speak, turnFacts, type Language, type Turn } from './speech'
 
 const characterAtom = atom({ plugin: 'piposh-buddy', key: 'character' } as const, null)
 const bubbleAtom = atom({ plugin: 'piposh-buddy', key: 'bubble' } as const, null)
@@ -92,11 +92,15 @@ function talk($: EngineInterface, frames: number, until: number) {
   void tick()
 }
 
-/** Puts `c` above the prompt, with nothing said yet. */
-async function meet($: EngineInterface, c: Character) {
-  voice.recent = []
+/**
+ * Puts `c` above the prompt with a short line of their own, so they show at once: a terminal too small for the face
+ * draws the line alone, and draws nothing without one. English has no lines of its own, so a catchphrase.
+ */
+async function meet($: EngineInterface, c: Character, language: Language) {
+  const line = fallback(c, language, Math.random) ?? c.catchphrases[0] ?? null
+  voice.recent = line ? [line] : []
   await update($, characterAtom, () => c.id)
-  await update($, bubbleAtom, () => null)
+  await update($, bubbleAtom, () => line)
 }
 
 /** The character on screen when one may speak: a person is watching and it is not quiet; null otherwise. */
@@ -146,7 +150,7 @@ export const register: Register = (on, options) => {
     await update($, quietAtom, () => isQuiet)
     // A reload keeps the session's character; a new session meets a new one.
     voice.recent = []
-    if (!FACES[(await read($, characterAtom)) ?? '']) await meet($, pick(Math.random))
+    if (!FACES[(await read($, characterAtom)) ?? '']) await meet($, pick(Math.random), language)
     return next(e)
   }).catch(($, e, next) => next(e))
 
@@ -214,7 +218,7 @@ export const register: Register = (on, options) => {
     if (!arg) return { text: current ? `${current.name.he} · ${current.name.en} (${current.game})\n\n${HELP}` : HELP }
     const next = arg === 'next' ? pick(Math.random, id) : findCharacter(arg)
     if (!next) return { text: `No character matches "${arg}".\n\n${HELP}` }
-    await meet($, next)
+    await meet($, next, language)
     return { text: `${next.name.he} · ${next.name.en} (${next.game})` }
   })
 

@@ -1,6 +1,6 @@
 {
   "name": "piposh-buddy",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A character from Guillotine's Piposh and Rating games above your prompt, reacting to your work in their own voice.",
   "author": { "name": "Yonatan Karp-Rudin", "url": "https://github.com/yonatankarp" },
   "homepage": "https://github.com/yonatankarp/piposh-buddy",
