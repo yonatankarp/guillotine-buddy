@@ -228,6 +228,11 @@ export const register: Register = (on, options) => {
     const character = CHARACTERS.find(c => c.id === id)
     if (!character || !FACES[character.id]) return next(e)
     const view = { character, frame: await read($, frameAtom), bubble: await read($, bubbleAtom), language }
-    return band($.ui.resolve(e), view, e.props.maxRows, e.props.bodyColumns, e.viewport?.isFullscreen === true, e.surface) ?? next(e)
+    const els = $.ui.resolve(e)
+    const ours = band(els, view, e.props.maxRows, e.props.bodyColumns, e.viewport?.isFullscreen === true, e.surface)
+    // Another buddy's band (pokebuddy's) or the engine's own stays, under ours, so both can be on at once.
+    const below = await next(e)
+    if (!ours) return below
+    return <els.Box flexDirection="column">{ours}{below}</els.Box>
   })
 }

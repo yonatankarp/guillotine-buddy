@@ -2,7 +2,7 @@ import type { On, RenderSurface } from 'claude-code'
 import { describe, expect, mock, test, type Engine } from 'claude-code/testing'
 import { CHARACTERS } from '../hooks/characters'
 
-/** What lies beneath the mod in a session, answered in memory; beneath the band, a marker for "the mod drew nothing". */
+/** What lies beneath the mod in a session, answered in memory; beneath the band, a marker standing for another buddy's band. */
 function world(on: On) {
   const store = new Map<string, unknown>()
   on('session.surfaces', async () => ({ value: [] }))
@@ -31,7 +31,8 @@ describe('/piposh <name>', () => {
       await piposh($, 'p1-piposh')
       const ui = await mount($, surface, maxRows, bodyColumns)
       expect((await piposh($, 'fritz')).text).toContain(fritz.name.en)
-      expect(await ui.find({ text: 'NOTHING' })).toBeUndefined()
+      // what lies beneath stays, under the band, so another buddy's band shows too
+      expect(await ui.find({ text: 'NOTHING' })).toBeDefined()
       const texts = (await ui.findAll({ type: 'Text' })).map(t => t.text.trim()).filter(t => t.length > 2)
       expect(texts.some(t => fritz.lines.some(l => l.includes(t)))).toBe(true)
       await ui.unmount()
