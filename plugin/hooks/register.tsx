@@ -4,7 +4,7 @@ import { CHARACTERS, type Character } from './characters'
 import { FACES } from './data/faces.generated'
 import { band } from './render/band'
 import { signalsFromTool, type Outcome, type Signal } from './signals'
-import { catchphrase, EXCERPT_MAX, RECENT_MAX, speak, turnFacts, type Language, type Turn } from './speech'
+import { catchphrase, examples, EXCERPT_MAX, RECENT_MAX, speak, turnFacts, type Language, type Turn } from './speech'
 
 const characterAtom = atom({ plugin: 'piposh-buddy', key: 'character' } as const, null)
 const bubbleAtom = atom({ plugin: 'piposh-buddy', key: 'bubble' } as const, null)
@@ -107,10 +107,10 @@ async function speaker($: EngineInterface, isInteractive: boolean): Promise<Char
 }
 
 /** Has `c` say a line about `turn` and move its mouth; dropped when another character took over meanwhile. */
-async function say($: EngineInterface, model: string, language: Language, c: Character, turn: Omit<Turn, 'phrase' | 'recent'>) {
+async function say($: EngineInterface, model: string, language: Language, c: Character, turn: Omit<Turn, 'phrase' | 'examples' | 'recent'>) {
   voice.isBusy = true
   try {
-    const line = await speak(clients($), model, c, language, { ...turn, phrase: catchphrase(c, Math.random), recent: voice.recent })
+    const line = await speak(clients($), model, c, language, { ...turn, phrase: catchphrase(c, Math.random, voice.recent), examples: examples(c, Math.random), recent: voice.recent })
     if (!line || (await read($, characterAtom)) !== c.id) return
     voice.recent = [...voice.recent, line].slice(-RECENT_MAX)
     voice.lastAt = await $.clock.now()

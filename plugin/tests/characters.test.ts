@@ -11,6 +11,8 @@ describe('characters', () => {
       expect(c.voice.length).toBeGreaterThan(100)
       expect(c.catchphrases.length).toBeGreaterThanOrEqual(2)
       expect(c.lines.length).toBeGreaterThanOrEqual(5)
+      expect(new Set(c.lines).size).toBe(c.lines.length)
+      expect(new Set(c.catchphrases).size).toBe(c.catchphrases.length)
       for (const l of [...c.lines, ...c.catchphrases]) expect(l.length).toBeLessThanOrEqual(LINE_MAX)
     }
   })

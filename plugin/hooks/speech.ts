@@ -10,9 +10,9 @@ export type Conversation = { prompt: string | null; answer: string | null }
 export type Moment = 'working' | 'event' | 'done'
 /**
  * What the line reacts to: the moment, the conversation, what got done (for an event, just that), a catchphrase to work
- * in, and the lines already said.
+ * in or none, a sample of the character's game lines to sound like, and the lines already said.
  */
-export type Turn = { moment: Moment; talk: Conversation; facts: string; phrase: string | null; recent: readonly string[] }
+export type Turn = { moment: Moment; talk: Conversation; facts: string; phrase: string | null; examples: readonly string[]; recent: readonly string[] }
 
 const MOMENTS: Record<Moment, string> = {
   working: 'Claude is still working on it.',
@@ -26,7 +26,9 @@ export const SPEECH_TIMEOUT_MS = 6000
 /** The longest line the bubble shows. */
 export const LINE_MAX = 120
 /** How often a line is asked to carry one of the character's catchphrases. */
-export const CATCHPHRASE_CHANCE = 0.4
+export const CATCHPHRASE_CHANCE = 0.25
+/** How many of the character's game lines one call shows, picked afresh each time so the examples vary. */
+export const EXAMPLES_MAX = 12
 /** How many of the character's last lines it is told not to repeat. */
 export const RECENT_MAX = 8
 /** Room for a Hebrew line, which takes more tokens than its length suggests; the bubble trims it anyway. */
@@ -50,21 +52,40 @@ export function turnFacts(signals: readonly Signal[]): string {
   return parts.join('; ')
 }
 
-/** The catchphrase this line should carry, or null: some lines do, so the phrases keep coming without every line being one. */
-export function catchphrase(c: Character, rand: () => number): string | null {
+/** The words that mark a catchphrase in a line: its text up to any trailing "...", without punctuation. */
+const core = (phrase: string) => phrase.split(/\.\.\.|…/)[0]!.replace(/[!?.,]/g, '').trim()
+
+/**
+ * The catchphrase this line should carry, or null: a few lines do, so the phrases keep coming without every line
+ * being one. One already said in the recent lines is skipped while another is left.
+ */
+export function catchphrase(c: Character, rand: () => number, recent: readonly string[] = []): string | null {
   if (c.catchphrases.length === 0 || rand() >= CATCHPHRASE_CHANCE) return null
-  return c.catchphrases[Math.floor(rand() * c.catchphrases.length)]!
+  // shortcut: an English line carries the phrase in Latin letters, which this Hebrew match misses; transliterate if English repeats show.
+  const fresh = c.catchphrases.filter(p => !recent.some(l => l.includes(core(p))))
+  const pool = fresh.length ? fresh : c.catchphrases
+  return pool[Math.floor(rand() * pool.length)]!
 }
 
-export function speechPrompt(c: Character, language: Language, { moment, talk, facts, phrase, recent }: Turn): { system: string; prompt: string } {
+/** Up to EXAMPLES_MAX of the character's game lines, picked at random without repeats. */
+export function examples(c: Character, rand: () => number): string[] {
+  const pool = [...c.lines]
+  const n = Math.min(EXAMPLES_MAX, pool.length)
+  for (let i = 0; i < n; i++) {
+    const j = i + Math.floor(rand() * (pool.length - i))
+    ;[pool[i], pool[j]] = [pool[j]!, pool[i]!]
+  }
+  return pool.slice(0, n)
+}
+
+export function speechPrompt(c: Character, language: Language, { moment, talk, facts, phrase, examples, recent }: Turn): { system: string; prompt: string } {
   const tongue = language === 'he'
     ? 'Speak Hebrew, in the character\'s own slang and rhythm.'
     : 'Speak English, keeping the character\'s attitude, rhythm and quirks as if dubbed from the Hebrew; a catchphrase stays Hebrew, in Latin letters.'
   const system = [
     `You are ${c.name.en} (${c.name.he}) from the Israeli adventure game ${c.game} (${GAMES[c.game]}, Guillotine), living in a developer's terminal as their buddy.`,
     c.voice && `Your character: ${c.voice}`,
-    c.catchphrases.length > 0 && `Your catchphrases: ${c.catchphrases.join(' / ')}`,
-    c.lines.length > 0 && `Lines you said in the game, for your voice. Match their style; never repeat one word for word:\n${c.lines.map(l => `- ${l}`).join('\n')}`,
+    c.catchphrases.length > 0 && `Your catchphrases, part of your voice but said only now and then: ${c.catchphrases.join(' / ')}. Use one only when the turn asks for it; otherwise speak in your own fresh words.`,
     `Reply with one short line (at most 15 words), in character, reacting to the moment: what the developer asked, that Claude is still at it, what just happened or what got done. Gloat at a failed check, show off at a passing one. ${tongue} Never quote secrets or code. No quotes, no emoji, no markdown.`,
   ].filter(Boolean).join('\n\n')
   const asked = excerpt(talk.prompt), answered = excerpt(talk.answer)
@@ -75,9 +96,10 @@ export function speechPrompt(c: Character, language: Language, { moment, talk, f
     moment !== 'event' && facts && `What got done: ${facts}`,
   ].filter(Boolean).join('\n')
   const prompt = [
+    examples.length > 0 && `Some lines you said in the game, for your voice. Match their style; never repeat one word for word:\n${examples.map(l => `- ${l}`).join('\n')}`,
     said,
     recent.length > 0 && `You already said these; say something new:\n${recent.map(l => `- ${l}`).join('\n')}`,
-    phrase && `This time, work in your catchphrase "${phrase}".`,
+    phrase ? `This time, work in your catchphrase "${phrase}".` : c.catchphrases.length > 0 && 'No catchphrase this time.',
   ].filter(Boolean).join('\n\n')
   return { system, prompt }
 }
@@ -104,7 +126,7 @@ export function fallback(c: Character, language: Language, rand: () => number): 
 export async function speak($: { model: Pick<EngineInterface['model'], 'complete'> }, model: string, c: Character, language: Language, turn: Turn): Promise<string | null> {
   try {
     const { system, prompt } = speechPrompt(c, language, turn)
-    // The persona and the game lines stay the same all session: cached, each turn sends only the conversation.
+    // The persona stays the same all session: cached; the sampled game lines and the conversation change each turn.
     const r = await $.model.complete({ model, system: [{ text: system, cache: true }], prompt, maxTokens: MAX_TOKENS, timeoutMs: SPEECH_TIMEOUT_MS })
     const line = r.isAnswered ? cleanReply(r.text) : null
     if (line) return line
