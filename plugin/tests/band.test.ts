@@ -46,6 +46,11 @@ describe('band', () => {
     expect(svg.props?.alt).toBe(character.name.en)
     expect(textOf(tree)).not.toContain(character.name.en)
   })
+  test('the face and bubble, or the line alone, stand centered in the band', () => {
+    for (const tree of [band(els, view, 80, 120, false), band(els, view, 20, 120, false), band(appEls, view, 10, 40, false, 'desktop')]) {
+      expect((tree as Node).props?.justifyContent).toBe('center')
+    }
+  })
   test('a frame past the face\'s last mouth draws its last mouth, not nothing', () => {
     expect(() => band(els, { ...view, frame: 99 }, 80, 120, false)).not.toThrow()
   })

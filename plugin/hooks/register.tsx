@@ -46,6 +46,11 @@ export function findCharacter(query: string): Character | null {
   return cast().find(c => [c.id, c.name.en, c.name.he].some(n => n.toLowerCase().includes(q))) ?? null
 }
 
+/** Everyone /piposh can bring, one per line, the one showing marked. */
+export function roster(current: string | null): string {
+  return cast().map(c => `${c.id === current ? '▸' : ' '} ${c.name.he} · ${c.name.en} (${c.game})`).join('\n')
+}
+
 /** The next mouth: any frame but the one showing, the resting face among them, so the mouth opens and closes. */
 export function nextFrame(current: number, talkFrames: number, rand: () => number): number {
   const k = Math.floor(rand() * talkFrames)
@@ -127,6 +132,7 @@ async function say($: EngineInterface, model: string, language: Language, c: Cha
 
 export const HELP = [
   `/${COMMAND}            who is here`,
+  `/${COMMAND} list       everyone you can meet`,
   `/${COMMAND} next       someone else`,
   `/${COMMAND} <name>     that character (Hebrew or English, part of the name is enough)`,
   `/${COMMAND} quiet      hide the character and stop the lines; again to bring them back`,
@@ -215,6 +221,7 @@ export const register: Register = (on, options) => {
       return { text: isQuiet ? 'Quiet: the character is hidden and says nothing until /piposh quiet again.' : `${current?.name[language] ?? 'Your buddy'} is back.` }
     }
     if (arg === 'help') return { text: HELP }
+    if (arg === 'list') return { text: roster(id) }
     if (!arg) return { text: current ? `${current.name.he} · ${current.name.en} (${current.game})\n\n${HELP}` : HELP }
     const next = arg === 'next' ? pick(Math.random, id) : findCharacter(arg)
     if (!next) return { text: `No character matches "${arg}".\n\n${HELP}` }

@@ -46,6 +46,7 @@
 | פקודה | מה היא עושה |
 | --- | --- |
 | <code dir="ltr">/piposh</code> | מי כאן עכשיו |
+| <code dir="ltr">/piposh list</code> | כל הדמויות שאפשר להביא, ומי כאן עכשיו |
 | <code dir="ltr">/piposh next</code> | מישהו אחר, באקראי |
 | <code dir="ltr">/piposh צוציק</code> | דמות לפי שם, בעברית או באנגלית. גם חלק מהשם מספיק |
 | <code dir="ltr">/piposh quiet</code> | הדמות נעלמת ושותקת, גם בשיחות הבאות. עוד פעם, והיא חוזרת |

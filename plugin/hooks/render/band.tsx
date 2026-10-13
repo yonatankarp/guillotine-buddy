@@ -45,7 +45,7 @@ function drawRows({ Box, Text }: BandElements, rows: Run[][]) {
 }
 
 /**
- * The face with the bubble beside it; fans know who it is, so no name is shown. The terminal draws the small face in
+ * The face with the bubble beside it, centered in the band; fans know who it is, so no name is shown. The terminal draws the small face in
  * half-blocks and gives way to the line alone when the face would take more than half the screen or leave the bubble
  * no room; null there before the character has said anything.
  */
@@ -58,13 +58,13 @@ export function band(els: BandElements, view: BandView, maxRows: number, columns
   const small = faceSize(face.small)
   const width = Math.min(BUBBLE_MAX, isApp ? BUBBLE_MAX : columns - small.cols - SIDE_EXTRA)
   const fits = isApp || (width >= BUBBLE_MIN && (isFullscreen || small.rows <= maxRows / 2))
-  if (!fits) return bubble ? <Text wrap="truncate-end">{bubble}</Text> : null
+  if (!fits) return bubble ? <Box flexDirection="row" justifyContent="center"><Text wrap="truncate-end">{bubble}</Text></Box> : null
   const frame = Math.min(view.frame, face.big.talk.length)
   const art = isApp && els.Svg
     ? <els.Svg key="face" source={faceSvg(face.big, frame)} alt={name} width={Math.round(face.big.w * SVG_HEIGHT / face.big.h)} height={SVG_HEIGHT} />
     : drawRows(els, faceRows(face.small, Math.min(view.frame, face.small.talk.length)))
   return (
-    <Box flexDirection="row">
+    <Box flexDirection="row" justifyContent="center">
       <Box key="face" flexDirection="column">{art}</Box>
       <Box key="side" flexDirection="column" marginLeft={2} justifyContent="center">
         {bubble && (

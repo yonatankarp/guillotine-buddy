@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 import { FACES } from '../hooks/data/faces.generated'
-import { cast, CHIME_GAP_MS, countsAsPrompt, findCharacter, isNotable, mayChime, nextFrame, pick, talkMs } from '../hooks/register'
+import { cast, CHIME_GAP_MS, countsAsPrompt, findCharacter, isNotable, mayChime, nextFrame, pick, roster, talkMs } from '../hooks/register'
 
 describe('register', () => {
   test('only characters with a baked face are picked, whatever the roll', () => {
@@ -17,6 +17,13 @@ describe('register', () => {
     expect(findCharacter('r-egoz')?.id).toBe('r-egoz')
     expect(findCharacter('nobody here')).toBeNull()
     expect(findCharacter('  ')).toBeNull()
+  })
+  test('the list names everyone who can be met, in Hebrew and English, the one showing marked', () => {
+    const lines = roster('p1-fritz').split('\n')
+    expect(lines.length).toBe(cast().length)
+    for (const c of cast()) expect(lines.some(l => l.includes(c.name.he) && l.includes(c.name.en))).toBe(true)
+    expect(lines.filter(l => l.startsWith('▸'))).toEqual([lines.find(l => l.includes('Fritz'))!])
+    expect(roster(null)).not.toContain('▸')
   })
   test('the mouth always moves: the next frame is never the one showing, and stays in range', () => {
     for (let current = 0; current <= 4; current++) {
