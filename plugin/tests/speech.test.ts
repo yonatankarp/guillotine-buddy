@@ -1,7 +1,7 @@
 import type { ModelCompleteRequest, ModelCompleteResult } from 'claude-code'
 import { describe, expect, test } from 'claude-code/testing'
 import type { Character } from '../hooks/characters'
-import { catchphrase, cleanReply, examples, fallback, says, speak, speechPrompt, turnFacts, type Conversation, type Moment } from '../hooks/speech'
+import { angle, ANGLES, catchphrase, cleanReply, examples, fallback, says, speak, speechPrompt, turnFacts, type Conversation, type Moment } from '../hooks/speech'
 
 const usage = { input_tokens: 1, output_tokens: 1, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 }
 const client = (complete: (r: ModelCompleteRequest) => ModelCompleteResult | Promise<ModelCompleteResult>) => ({ model: { complete: async (r: ModelCompleteRequest) => complete(r) } })
@@ -13,10 +13,23 @@ const pustema: Character = {
   lines: ['אני רואה... אני רואה צרות!', 'שורה ארוכה מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד מאוד'],
 }
 
-const turn = (talk: Conversation, more: { moment?: Moment; facts?: string; phrase?: string | null; examples?: string[]; recent?: string[] } = {}) => ({ moment: 'done' as Moment, talk, facts: '', phrase: null, examples: [], recent: [], ...more })
+const turn = (talk: Conversation, more: { moment?: Moment; facts?: string; phrase?: string | null; angle?: string; examples?: string[]; recent?: string[] } = {}) => ({ moment: 'done' as Moment, talk, facts: '', phrase: null, angle: '', examples: [], recent: [], ...more })
 const NO_PHRASE = '\n\nNo catchphrase this time.'
 
 describe('speech', () => {
+  test('each line gets an angle of its own: any of them, drawn at random, asked for after the moment', () => {
+    expect(angle(() => 0)).toBe(ANGLES[0])
+    expect(angle(() => 0.9999)).toBe(ANGLES[ANGLES.length - 1])
+    const p = speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null }, { angle: ANGLES[1] }))
+    expect(p.prompt).toBe(`The developer asked: x\nClaude has finished.\n\nThis time: ${ANGLES[1]}.\n\nNo catchphrase this time.`)
+  })
+  test('the persona is a scene from the game, in the character\'s own way of talking, with room for a short sentence or two', () => {
+    const { system } = speechPrompt(pustema, 'he', turn({ prompt: 'x', answer: null }))
+    expect(system).toContain('not an assistant\'s reply')
+    expect(system).toContain('Talk exactly the way you do in the game')
+    expect(system).toContain('at most 20 words')
+    expect(system).not.toContain('Gloat')
+  })
   test('the system prompt carries the game and the voice; the prompt the sampled lines and the conversation', () => {
     const p = speechPrompt(pustema, 'he', turn({ prompt: 'fix the build', answer: 'Fixed it.' }, { examples: ['אני רואה... אני רואה צרות!'] }))
     expect(p.system).toContain('Pustema (פוסטמה)')

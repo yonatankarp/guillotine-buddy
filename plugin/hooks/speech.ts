@@ -12,7 +12,23 @@ export type Moment = 'working' | 'event' | 'done'
  * What the line reacts to: the moment, the conversation, what got done (for an event, just that), a catchphrase to work
  * in or none, a sample of the character's game lines to sound like, and the lines already said.
  */
-export type Turn = { moment: Moment; talk: Conversation; facts: string; phrase: string | null; examples: readonly string[]; recent: readonly string[] }
+export type Turn = { moment: Moment; talk: Conversation; facts: string; phrase: string | null; angle: string; examples: readonly string[]; recent: readonly string[] }
+
+/** Ways into a line, one drawn at random each time, so the character doesn't react the same way twice in a row. */
+export const ANGLES = [
+  'complain about something, the way only you would',
+  'boast about yourself',
+  'give the developer unsolicited advice',
+  'ask the developer a question',
+  'misunderstand what is going on, in your own way',
+  'bring up something from your life in the game',
+  'react with a strong emotion',
+  'take a jab at someone, the developer or Claude included',
+  'make a big drama out of something small',
+  'compare it to something from your world',
+] as const
+
+export const angle = (rand: () => number): string => ANGLES[Math.floor(rand() * ANGLES.length)]!
 
 const MOMENTS: Record<Moment, string> = {
   working: 'Claude is still working on it.',
@@ -85,15 +101,16 @@ export function examples(c: Character, rand: () => number): string[] {
   return pool.slice(0, n)
 }
 
-export function speechPrompt(c: Character, language: Language, { moment, talk, facts, phrase, examples, recent }: Turn): { system: string; prompt: string } {
+export function speechPrompt(c: Character, language: Language, { moment, talk, facts, phrase, angle, examples, recent }: Turn): { system: string; prompt: string } {
   const tongue = language === 'he'
     ? 'Speak Hebrew, in the character\'s own slang and rhythm.'
     : 'Speak English, keeping the character\'s attitude, rhythm and quirks as if dubbed from the Hebrew; a catchphrase stays Hebrew, in Latin letters.'
   const system = [
-    `You are ${c.name.en} (${c.name.he}) from the Israeli adventure game ${c.game} (${GAMES[c.game]}, Guillotine), living in a developer's terminal as their buddy.`,
+    `You are ${c.name.en} (${c.name.he}) from the Israeli adventure game ${c.game} (${GAMES[c.game]}, Guillotine), living in a developer's terminal as their buddy. Each line is a moment of you in a scene from your game, not an assistant's reply: you have your own concerns, grudges and agenda, and the developer's work is just what happens around you.`,
     c.voice && `Your character: ${c.voice}`,
     c.catchphrases.length > 0 && `Your catchphrases, part of your voice but said only now and then: ${c.catchphrases.join(' / ')}. Use one only when the turn asks for it; otherwise speak in your own fresh words.`,
-    `Reply with one short line (at most 15 words), in character, reacting to the moment: what the developer asked, that Claude is still at it, what just happened or what got done. Gloat at a failed check, show off at a passing one. ${tongue} Never quote secrets or code. No quotes, no emoji, no markdown.`,
+    `Talk exactly the way you do in the game: your grammar and its mistakes, your slang, how you address people, your obsessions, the people and places of your game. Borrow the rhythm and words of your game lines, never their content. React the way you would, not the way a helpful assistant would, and pick up something specific from what the developer asked or what happened, in your own terms.`,
+    `Reply with one or two short sentences, at most 20 words in all, in character. ${tongue} Never open the way one of your recent lines opened. Never quote secrets or code. No quotes, no emoji, no markdown.`,
   ].filter(Boolean).join('\n\n')
   const asked = excerpt(talk.prompt), answered = excerpt(talk.answer)
   const said = [
@@ -106,7 +123,8 @@ export function speechPrompt(c: Character, language: Language, { moment, talk, f
     examples.length > 0 && `Some lines you said in the game, for your voice. Match their style; never repeat one word for word:\n${examples.map(l => `- ${l}`).join('\n')}`,
     said,
     recent.length > 0 && `You already said these; say something new:\n${recent.map(l => `- ${l}`).join('\n')}`,
-    phrase ? `This time, work in your catchphrase "${phrase}".` : c.catchphrases.length > 0 && 'No catchphrase this time.',
+    angle && `This time: ${angle}.`,
+    phrase ? `Work in your catchphrase "${phrase}".` : c.catchphrases.length > 0 && 'No catchphrase this time.',
   ].filter(Boolean).join('\n\n')
   return { system, prompt }
 }
