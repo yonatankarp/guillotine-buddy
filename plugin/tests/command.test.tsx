@@ -1,6 +1,7 @@
 import type { On, RenderSurface } from 'claude-code'
 import { describe, expect, mock, test, type Engine } from 'claude-code/testing'
 import { CHARACTERS } from '../hooks/characters'
+import { cast } from '../hooks/register'
 
 /** What lies beneath the mod in a session, answered in memory; beneath the band, a marker standing for another buddy's band. */
 function world(on: On) {
@@ -38,4 +39,21 @@ describe('/piposh <name>', () => {
       await ui.unmount()
     })
   }
+})
+
+describe('every character', () => {
+  // The host refuses a band it cannot draw and drops it whole, another buddy's band with it.
+  test('draws on every surface, with what lies beneath kept', async ($, on) => {
+    world(on)
+    mock.clock(on)
+    await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+    for (const c of cast()) {
+      await piposh($, c.id)
+      for (const surface of ['desktop', 'terminal'] as const) {
+        const ui = await mount($, surface, 40, 120)
+        expect(await ui.find({ text: 'NOTHING' })).toBeDefined()
+        await ui.unmount()
+      }
+    }
+  })
 })

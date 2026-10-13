@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'claude-code/testing'
 import { CHARACTERS } from '../hooks/characters'
 import { FACES } from '../hooks/data/faces.generated'
-import { faceRows, faceSize, faceSvg, frames, type Face } from '../hooks/render/face'
+import { faceRows, faceSize, faceSvg, frames, SVG_SOURCE_MAX, type Face } from '../hooks/render/face'
 
 // A 2x3 face, rest all colour 1; one talk frame paints its middle pixel in colour 2. Bytes pack two indexes each.
 const tiny: Face = {
@@ -20,11 +20,16 @@ describe('face', () => {
     expect(rows[0]).toEqual([{ text: '▀', fg: '#000000', bg: '#000000' }, { text: '▀', fg: '#000000', bg: '#ff0000' }])
     expect(rows[1]).toEqual([{ text: '▀▀', fg: '#000000' }])
   })
-  test('svg: one rect per run, nothing for clear pixels', () => {
+  test('svg: a path per colour, a subpath per run, nothing for clear pixels', () => {
     const svg = faceSvg({ ...tiny, rest: btoa(String.fromCharCode(0x01, 0x11, 0x11)) }, 0)
     expect(svg).toContain('viewBox="0 0 2 3"')
-    expect(svg.match(/<rect/g)?.length).toBe(3)
-    expect(svg).toContain('<rect x="1" y="0" width="1"')
+    expect(svg.match(/<path/g)?.length).toBe(1)
+    expect(svg).toContain('<path fill="#000000" d="M1 0h1v1H1zM0 1h2v1H0zM0 2h2v1H0z"/>')
+  })
+  test('every baked frame\'s svg fits under the host\'s source limit, or the whole band is dropped', () => {
+    for (const { big } of Object.values(FACES)) {
+      for (let f = 0; f <= big.talk.length; f++) expect(faceSvg(big, f).length).toBeLessThanOrEqual(SVG_SOURCE_MAX)
+    }
   })
   test('every baked face is a roster character, decodes whole and talks with at least two mouths', () => {
     for (const [id, { big, small }] of Object.entries(FACES)) {

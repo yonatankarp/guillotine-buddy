@@ -47,8 +47,11 @@ export function faceRows(face: Face, frame: number): Run[][] {
   return rows
 }
 
+/** The host refuses an Svg source longer than this, and drops the whole band with it. */
+export const SVG_SOURCE_MAX = 131072
+
 const svgCache = new WeakMap<Face, string[]>()
-/** One frame as SVG markup, a rect per same-colour run, crisp at any scale; built once per frame, as talking redraws it often. */
+/** One frame as SVG markup, a path per colour, crisp at any scale; built once per frame, as talking redraws it often. */
 export function faceSvg(face: Face, frame: number): string {
   const built = svgCache.get(face) ?? []
   svgCache.set(face, built)
@@ -57,15 +60,17 @@ export function faceSvg(face: Face, frame: number): string {
 
 function buildSvg(face: Face, frame: number): string {
   const px = frames(face)[frame]!
-  const rects: string[] = []
+  // A rect per run overflowed SVG_SOURCE_MAX on the busiest faces; a path per colour with a short subpath per run does not.
+  const d: string[] = face.palette.map(() => '')
   for (let y = 0; y < face.h; y++) {
     for (let x = 0; x < face.w;) {
       const k = px[y * face.w + x]!
       let end = x + 1
       while (end < face.w && px[y * face.w + end] === k) end++
-      if (k) rects.push(`<rect x="${x}" y="${y}" width="${end - x}" height="1" fill="${face.palette[k]}"/>`)
+      if (k) d[k] += `M${x} ${y}h${end - x}v1H${x}z`
       x = end
     }
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${face.w} ${face.h}" width="${face.w}" height="${face.h}" shape-rendering="crispEdges">${rects.join('')}</svg>`
+  const paths = d.map((p, k) => p && `<path fill="${face.palette[k]}" d="${p}"/>`).join('')
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${face.w} ${face.h}" width="${face.w}" height="${face.h}" shape-rendering="crispEdges">${paths}</svg>`
 }
