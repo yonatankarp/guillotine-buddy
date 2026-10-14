@@ -121,9 +121,9 @@ describe('speech', () => {
     expect(p.prompt).not.toContain('a'.repeat(301))
   })
   test('cleanReply keeps the first line, unquoted, and drops refusals', () => {
-    expect(cleanReply('\n"אוי ואבוי!"\nmore')).toBe('אוי ואבוי!')
+    expect(cleanReply('\n"אוי ואבוי!"\nmore', 'he')).toBe('אוי ואבוי!')
     expect(cleanReply("I can't do that")).toBeNull()
-    expect(cleanReply('אני לא יכול לסלוח לך!')).toBe('אני לא יכול לסלוח לך!')
+    expect(cleanReply('אני לא יכול לסלוח לך!', 'he')).toBe('אני לא יכול לסלוח לך!')
     expect(cleanReply('Here is a line:')).toBeNull()
     expect(cleanReply('')).toBeNull()
   })
@@ -131,6 +131,12 @@ describe('speech', () => {
     expect(cleanReply('מחכה לירוק, ואתה מחכה Claude!', 'he')).toBeNull()
     expect(cleanReply('מחכה לירוק, ואתה מחכה לקלוד!', 'he')).toBe('מחכה לירוק, ואתה מחכה לקלוד!')
     expect(cleanReply('Waiting on Claude again!', 'en')).toBe('Waiting on Claude again!')
+  })
+  test('a line in the other language is dropped: the character keeps to the one chosen, whatever the conversation is in', () => {
+    expect(cleanReply('Waiting on Claude again!', 'he')).toBeNull()
+    expect(cleanReply('מחכה לקלוד!', 'en')).toBeNull()
+    expect(speechPrompt(pustema, 'he', turn({ prompt: 'fix the build', answer: 'Done.' })).system).toContain('Speak Hebrew alone, whatever language the developer or Claude wrote in')
+    expect(speechPrompt(pustema, 'en', turn({ prompt: 'תתקן', answer: null })).system).toContain('Speak English alone, whatever language the developer or Claude wrote in')
     for (const c of CHARACTERS) for (const r of [0, 0.25, 0.5, 0.75, 0.9999]) expect(fallback(c, 'he', () => r) ?? '').not.toMatch(/[A-Za-z]/)
   })
   test('the fallback is a short line of the character in Hebrew, nothing in English', () => {

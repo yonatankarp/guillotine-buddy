@@ -103,8 +103,8 @@ export function examples(c: Character, rand: () => number): string[] {
 
 export function speechPrompt(c: Character, language: Language, { moment, talk, facts, phrase, angle, examples, recent }: Turn): { system: string; prompt: string } {
   const tongue = language === 'he'
-    ? 'Speak Hebrew, in the character\'s own slang and rhythm, in Hebrew letters only: no Latin letter anywhere, so a name or a word of the trade is spelled the way it sounds (קלוד, פול, קומיט, טסט).'
-    : 'Speak English, keeping the character\'s attitude, rhythm and quirks as if dubbed from the Hebrew; a catchphrase stays Hebrew, in Latin letters.'
+    ? 'Speak Hebrew alone, whatever language the developer or Claude wrote in, in the character\'s own slang and rhythm, in Hebrew letters only: no Latin letter anywhere, so a name or a word of the trade is spelled the way it sounds (קלוד, פול, קומיט, טסט).'
+    : 'Speak English alone, whatever language the developer or Claude wrote in, keeping the character\'s attitude, rhythm and quirks as if dubbed from the Hebrew; a catchphrase stays Hebrew, in Latin letters, so no Hebrew letter anywhere.'
   const system = [
     `You are ${c.name.en} (${c.name.he}) from the Israeli adventure game ${c.game} (${GAMES[c.game]}, Guillotine), living in a developer's terminal as their buddy. Each line is a moment of you in a scene from your game, not an assistant's reply: you have your own concerns, grudges and agenda, and the developer's work is just what happens around you.`,
     c.voice && `Your character: ${c.voice}`,
@@ -134,12 +134,14 @@ const REFUSAL = /^(i can['’]?t|i cannot|sorry|as an ai)\b/i
 
 /** Latin letters in a Hebrew line: the bubble's right-to-left text turns a mixed line around and it reads scrambled. */
 const LATIN = /[A-Za-z]/
+/** Hebrew letters in an English line: the character left the language the person chose. */
+const HEBREW = /[\u0590-\u05FF]/
 
 export function cleanReply(text: string, language: Language = 'en'): string | null {
   const first = text.split('\n').map(l => l.trim()).find(l => l.length > 0)
   if (!first) return null
   const unquoted = first.replace(/^["'“”״]+|["'“”״]+$/g, '').trim()
-  if (!unquoted || REFUSAL.test(unquoted) || unquoted.endsWith(':') || (language === 'he' && LATIN.test(unquoted))) return null
+  if (!unquoted || REFUSAL.test(unquoted) || unquoted.endsWith(':') || (language === 'he' ? LATIN : HEBREW).test(unquoted)) return null
   return unquoted.slice(0, LINE_MAX)
 }
 

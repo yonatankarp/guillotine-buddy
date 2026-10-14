@@ -49,9 +49,22 @@ export function findCharacter(query: string): Character | null {
 /** Who `c` is and their game, in one language: Hebrew beside English reads scrambled in right-to-left text. */
 export const label = (c: Character, language: Language) => language === 'he' ? `${c.name.he} (${GAMES[c.game]})` : `${c.name.en} (${c.game})`
 
-/** Everyone /piposh can bring, one per line, the one showing marked. */
-export function roster(current: string | null, language: Language): string {
-  return cast().map(c => `${c.id === current ? '▸' : ' '} ${label(c, language)}`).join('\n')
+/**
+ * Everyone /piposh can bring, as a table: English name, Hebrew name, game, the one showing marked. The game stays in
+ * English so a Latin letter always stands between the Hebrew name and the next column, or bidi would swap the columns.
+ * A title leads, as the host prefixes the first line with the plugin's name.
+ */
+export function roster(current: string | null): string {
+  const rows = [['English', 'Hebrew', 'Game'], ...cast().map(c => [c.name.en, c.name.he, c.game])]
+  const widths = [0, 1].map(i => Math.max(...rows.map(r => r[i]!.length)))
+  const line = (mark: string, r: string[]) => `${mark} ${r[0]!.padEnd(widths[0]!)}   ${r[1]!.padEnd(widths[1]!)}   ${r[2]}`.trimEnd()
+  return [
+    `${cast().length} characters · /${COMMAND} <name> brings one`,
+    '',
+    line(' ', rows[0]!),
+    line(' ', widths.concat(8).map(w => '─'.repeat(w))),
+    ...cast().map((c, i) => line(c.id === current ? '▸' : ' ', rows[i + 1]!)),
+  ].join('\n')
 }
 
 /** The next mouth: any frame but the one showing, the resting face among them, so the mouth opens and closes. */
@@ -102,10 +115,11 @@ function talk($: EngineInterface, frames: number, until: number) {
 
 /**
  * Puts `c` above the prompt with a short line of their own, so they show at once: a terminal too small for the face
- * draws the line alone, and draws nothing without one. English has no lines of its own, so a catchphrase.
+ * draws the line alone, and draws nothing without one. English has no lines of its own, and a Hebrew catchphrase
+ * would leave the chosen language, so an English character meets with no line until it speaks.
  */
 async function meet($: EngineInterface, c: Character, language: Language) {
-  const line = fallback(c, language, Math.random) ?? c.catchphrases[0] ?? null
+  const line = fallback(c, language, Math.random)
   voice.recent = line ? [line] : []
   await update($, characterAtom, () => c.id)
   await update($, bubbleAtom, () => line)
@@ -224,7 +238,7 @@ export const register: Register = (on, options) => {
       return { text: isQuiet ? 'Quiet: the character is hidden and says nothing until /piposh quiet again.' : `${current?.name[language] ?? 'Your buddy'} is back.` }
     }
     if (arg === 'help') return { text: HELP }
-    if (arg === 'list') return { text: roster(id, language) }
+    if (arg === 'list') return { text: roster(id) }
     if (!arg) return { text: current ? `${label(current, language)}\n\n${HELP}` : HELP }
     const next = arg === 'next' ? pick(Math.random, id) : findCharacter(arg)
     if (!next) return { text: `No character matches "${arg}".\n\n${HELP}` }

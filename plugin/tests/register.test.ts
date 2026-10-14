@@ -18,18 +18,22 @@ describe('register', () => {
     expect(findCharacter('nobody here')).toBeNull()
     expect(findCharacter('  ')).toBeNull()
   })
-  test('the list names everyone who can be met, the one showing marked', () => {
-    const lines = roster('p1-fritz', 'en').split('\n')
-    expect(lines.length).toBe(cast().length)
-    for (const c of cast()) expect(lines.some(l => l.includes(c.name.en))).toBe(true)
-    expect(lines.filter(l => l.startsWith('▸'))).toEqual([lines.find(l => l.includes('Fritz'))!])
-    expect(roster(null, 'en')).not.toContain('▸')
+  test('the list is a table of everyone who can be met: English, Hebrew, game, in aligned columns, the one showing marked', () => {
+    const lines = roster('p1-fritz').split('\n')
+    const rows = lines.slice(4)
+    expect(rows.length).toBe(cast().length)
+    cast().forEach((c, i) => {
+      const row = rows[i]!
+      expect(row.indexOf(c.name.en)).toBe(lines[2]!.indexOf('English'))
+      expect(row.indexOf(c.name.he)).toBe(lines[2]!.indexOf('Hebrew'))
+      expect(row.endsWith(c.game)).toBe(true)
+      expect(row.indexOf(c.game, row.indexOf(c.name.he) + c.name.he.length)).toBe(lines[2]!.indexOf('Game'))
+    })
+    expect(rows.filter(l => l.startsWith('▸'))).toEqual([rows.find(l => l.includes('Fritz'))!])
+    expect(roster(null)).not.toContain('▸')
   })
-  test('the list speaks one language: Hebrew has no Latin letter, English no Hebrew one', () => {
-    const he = roster('p1-fritz', 'he')
-    for (const c of cast()) expect(he).toContain(c.name.he)
-    expect(he).not.toMatch(/[A-Za-z]/)
-    expect(roster('p1-fritz', 'en')).not.toMatch(/[\u0590-\u05FF]/)
+  test('in the list, a Latin letter stands between a Hebrew name and anything after it, so bidi keeps the columns in place', () => {
+    for (const row of roster(null).split('\n').slice(4)) expect(row).toMatch(/[\u0590-\u05FF][^A-Za-z\u0590-\u05FF]*[A-Za-z][^\u0590-\u05FF]*$/)
   })
   test('the mouth always moves: the next frame is never the one showing, and stays in range', () => {
     for (let current = 0; current <= 4; current++) {
