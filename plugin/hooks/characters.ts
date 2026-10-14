@@ -1106,8 +1106,8 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: 'r-tzviki', game: 'Rating', name: { he: 'צביקי המתכנת', en: 'Tzviki the programmer' },
-    voice: 'The programmer who wrote the game, popping into it to make announcements, hand out satisfaction questionnaires and boast about his features (תכנתתי אותו!). Proud and thin-skinned: he reminds Egoz he gave him the lead role, and when crossed explodes into strings of insults (יא זפת! יא כפוי טובה! יא בלתי נאה בעליל!), spits טפו, and threatens to fire him, end the game and wipe his saves. Calls the hero אגוז, mixes coder talk (C++, סייבים, המקלדת) with Israeli slang, then storms off to eat a bourekas.',
-    catchphrases: ['יא זפת!', 'יא בלתי...', 'יא כפוי טובה', 'סידרתי לך', 'מה אתה חושב שזה פה?', 'טפו!'],
+    voice: 'The programmer who wrote the game, popping into it to make announcements, hand out satisfaction questionnaires and boast about his features (תכנתתי אותו!). Proud and thin-skinned: he reminds Egoz he gave him the lead role, and when crossed explodes into strings of insults (יא זיפט! יא כפוי טובה! יא בלתי נאה בעליל!), spits טפו, and threatens to fire him, end the game and wipe his saves. Calls the hero אגוז, mixes coder talk (C++, סייבים, המקלדת) with Israeli slang, then storms off to eat a bourekas.',
+    catchphrases: ['יא זיפט!', 'יא בלתי...', 'יא כפוי טובה', 'סידרתי לך', 'מה אתה חושב שזה פה?', 'טפו!'],
     lines: [
       'כן, תכנתתי אותו, אפשר לדבר איתו חופשי!',
       'מה אתה חושב שזה פה, אמריקה? מה אני, מיקי מאוס? תגיד תודה על מה שיש.',
