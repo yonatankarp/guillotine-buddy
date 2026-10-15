@@ -57,3 +57,25 @@ describe('every character', () => {
     }
   })
 })
+
+describe('/piposh off and on', () => {
+  test('off hides the band and keeps it hidden; on brings it back; again is no toggle', async ($, on) => {
+    world(on)
+    mock.clock(on)
+    await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+    await piposh($, 'fritz')
+    const shown = async () => {
+      const ui = await mount($, 'terminal', 40, 120)
+      const n = (await ui.findAll({ type: 'Text' })).filter(t => t.text.trim() !== 'NOTHING').length
+      await ui.unmount()
+      return n > 0
+    }
+    expect(await shown()).toBe(true)
+    await piposh($, 'off')
+    await piposh($, 'off')
+    expect(await shown()).toBe(false)
+    await piposh($, 'on')
+    await piposh($, 'on')
+    expect(await shown()).toBe(true)
+  })
+})
