@@ -47,7 +47,7 @@ describe('prompts', () => {
   test('what got done and the lines already said reach the prompt; nothing is said of them when there are none', () => {
     const p = speechPrompt(pustema, turn({ prompt: 'x', answer: null }, { facts: '1 commit', recent: ['שורה קודמת'] }))
     expect(p.prompt).toContain('What got done: 1 commit')
-    expect(p.prompt).toContain('You already said these; say something new:\n- שורה קודמת')
+    expect(p.prompt).toContain('You already said these; say something new, about something none of them is about:\n- שורה קודמת')
     expect(speechPrompt(pustema, turn({ prompt: 'x', answer: null })).prompt).toBe('The developer asked: x\nClaude has finished.' + NO_PHRASE)
   })
   test('the line knows its moment: Claude still at it, something that just happened, or the end of the turn', () => {

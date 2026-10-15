@@ -50,7 +50,7 @@ function prompt(c: Character, { moment, talk, facts, phrase, recent }: Turn): st
   ].filter(Boolean).join('\n')
   return [
     said,
-    recent.length > 0 && `You already said these; say something new:\n${list(recent)}`,
+    recent.length > 0 && `You already said these; say something new, about something none of them is about:\n${list(recent)}`,
     phrase ? `Work in your catchphrase "${phrase}".` : c.catchphrases.length > 0 && 'No catchphrase this time.',
   ].filter(Boolean).join('\n\n')
 }
