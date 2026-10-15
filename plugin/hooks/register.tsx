@@ -152,7 +152,8 @@ export const HELP = [
   `/${COMMAND} list       everyone you can meet`,
   `/${COMMAND} next       someone else`,
   `/${COMMAND} <name>     that character (Hebrew or English, part of the name is enough)`,
-  `/${COMMAND} quiet      hide the character and stop the lines; again to bring them back`,
+  `/${COMMAND} off        hide the character and stop the lines`,
+  `/${COMMAND} on         bring the character back`,
 ].join('\n')
 
 export const register: Register = (on, options) => {
@@ -167,7 +168,7 @@ export const register: Register = (on, options) => {
 
   on('session.start', async ($, e, next) => {
     isInteractive = e.isInteractive || await hasAppClient($)
-    await $.command.register({ name: COMMAND, description: 'Your Piposh buddy: next, a character by name, or quiet' })
+    await $.command.register({ name: COMMAND, description: 'Your Piposh buddy: list, next, a character by name, on or off' })
     const isQuiet = (await $.store.get('quiet')) === true
     await update($, quietAtom, () => isQuiet)
     // A reload keeps the session's character; a new session meets a new one.
@@ -230,11 +231,11 @@ export const register: Register = (on, options) => {
     const arg = e.args.trim()
     const id = await read($, characterAtom)
     const current = CHARACTERS.find(c => c.id === id)
-    if (arg === 'quiet') {
-      const isQuiet = !(await read($, quietAtom))
+    if (arg === 'on' || arg === 'off') {
+      const isQuiet = arg === 'off'
       await $.store.set('quiet', isQuiet)
       await update($, quietAtom, () => isQuiet)
-      return { text: isQuiet ? 'Quiet: the character is hidden and says nothing until /piposh quiet again.' : `${current?.name.he ?? 'Your buddy'} is back.` }
+      return { text: isQuiet ? `Off: the character is hidden and says nothing until /${COMMAND} on.` : `${current?.name.he ?? 'Your buddy'} is back.` }
     }
     if (arg === 'help') return { text: HELP }
     if (arg === 'list') return { text: roster(id) }
