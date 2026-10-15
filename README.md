@@ -73,7 +73,6 @@
 
 | הגדרה | ברירת מחדל | מה היא עושה |
 | --- | --- | --- |
-| <code dir="ltr">language</code> | <code dir="ltr">he</code> | <code dir="ltr">he</code>: עברית, כמו במשחקים. <code dir="ltr">en</code>: אנגלית באותו קול, ומשפטי המחץ נשארים בעברית באותיות לטיניות |
 | <code dir="ltr">speechModel</code> | <code dir="ltr">haiku</code> | המודל שכותב את המשפטים של הדמות |
 
 ## הקאסט

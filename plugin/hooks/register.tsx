@@ -4,7 +4,8 @@ import { CHARACTERS, type Character } from './characters'
 import { FACES } from './data/faces.generated'
 import { band } from './render/band'
 import { signalsFromTool, type Outcome, type Signal } from './signals'
-import { angle, catchphrase, examples, EXCERPT_MAX, fallback, GAMES, RECENT_MAX, speak, turnFacts, type Language, type Turn } from './speech'
+import { EXCERPT_MAX, GAMES, type Turn } from './prompts'
+import { catchphrase, fallback, RECENT_MAX, speak, turnFacts } from './speech'
 
 const characterAtom = atom({ plugin: 'piposh-buddy', key: 'character' } as const, null)
 const bubbleAtom = atom({ plugin: 'piposh-buddy', key: 'bubble' } as const, null)
@@ -46,8 +47,8 @@ export function findCharacter(query: string): Character | null {
   return cast().find(c => [c.id, c.name.en, c.name.he].some(n => n.toLowerCase().includes(q))) ?? null
 }
 
-/** Who `c` is and their game, in one language: Hebrew beside English reads scrambled in right-to-left text. */
-export const label = (c: Character, language: Language) => language === 'he' ? `${c.name.he} (${GAMES[c.game]})` : `${c.name.en} (${c.game})`
+/** Who `c` is and their game, in Hebrew alone: Hebrew beside English reads scrambled in right-to-left text. */
+export const label = (c: Character) => `${c.name.he} (${GAMES[c.game]})`
 
 /**
  * Everyone /piposh can bring, as a table: English name, Hebrew name, game, the one showing marked. The game stays in
@@ -115,11 +116,10 @@ function talk($: EngineInterface, frames: number, until: number) {
 
 /**
  * Puts `c` above the prompt with a short line of their own, so they show at once: a terminal too small for the face
- * draws the line alone, and draws nothing without one. English has no lines of its own, and a Hebrew catchphrase
- * would leave the chosen language, so an English character meets with no line until it speaks.
+ * draws the line alone, and draws nothing without one.
  */
-async function meet($: EngineInterface, c: Character, language: Language) {
-  const line = fallback(c, language, Math.random)
+async function meet($: EngineInterface, c: Character) {
+  const line = fallback(c, Math.random)
   voice.recent = line ? [line] : []
   await update($, characterAtom, () => c.id)
   await update($, bubbleAtom, () => line)
@@ -133,10 +133,10 @@ async function speaker($: EngineInterface, isInteractive: boolean): Promise<Char
 }
 
 /** Has `c` say a line about `turn` and move its mouth; dropped when another character took over meanwhile. */
-async function say($: EngineInterface, model: string, language: Language, c: Character, turn: Omit<Turn, 'phrase' | 'angle' | 'examples' | 'recent'>) {
+async function say($: EngineInterface, model: string, c: Character, turn: Omit<Turn, 'phrase' | 'recent'>) {
   voice.isBusy = true
   try {
-    const line = await speak(clients($), model, c, language, { ...turn, phrase: catchphrase(c, Math.random, voice.recent), angle: angle(Math.random), examples: examples(c, Math.random), recent: voice.recent })
+    const line = await speak(clients($), model, c, { ...turn, phrase: catchphrase(c, Math.random, voice.recent), recent: voice.recent })
     if (!line || (await read($, characterAtom)) !== c.id) return
     voice.recent = [...voice.recent, line].slice(-RECENT_MAX)
     voice.lastAt = await $.clock.now()
@@ -157,7 +157,6 @@ export const HELP = [
 
 export const register: Register = (on, options) => {
   const model = String(options.speechModel ?? 'haiku')
-  const language: Language = options.language === 'en' ? 'en' : 'he'
   let turnPrompt: string | null = null
   let signals: Signal[] = []
   // Which turn is running (0: none), so a line timed for one turn never lands in the next.
@@ -173,7 +172,7 @@ export const register: Register = (on, options) => {
     await update($, quietAtom, () => isQuiet)
     // A reload keeps the session's character; a new session meets a new one.
     voice.recent = []
-    if (!FACES[(await read($, characterAtom)) ?? '']) await meet($, pick(Math.random), language)
+    if (!FACES[(await read($, characterAtom)) ?? '']) await meet($, pick(Math.random))
     return next(e)
   }).catch(($, e, next) => next(e))
 
@@ -191,7 +190,7 @@ export const register: Register = (on, options) => {
         $.clock.after(WORKING_MS, async () => {
           if (turn !== mine || !mayChime(await $.clock.now())) return
           const c = await speaker($, isInteractive)
-          if (c) await say($, model, language, c, { moment: 'working', talk: { prompt: turnPrompt, answer: null }, facts: turnFacts(signals) })
+          if (c) await say($, model, c, { moment: 'working', talk: { prompt: turnPrompt, answer: null }, facts: turnFacts(signals) })
         })
       }
     }
@@ -207,7 +206,7 @@ export const register: Register = (on, options) => {
       const notable = got.filter(isNotable)
       if (notable.length > 0 && turn !== 0 && mayChime(await $.clock.now())) {
         const c = await speaker($, isInteractive)
-        if (c) $.clock.after(0, () => say($, model, language, c, { moment: 'event', talk: { prompt: turnPrompt, answer: null }, facts: turnFacts(notable) }))
+        if (c) $.clock.after(0, () => say($, model, c, { moment: 'event', talk: { prompt: turnPrompt, answer: null }, facts: turnFacts(notable) }))
       }
     } catch {}
     return ran
@@ -223,7 +222,7 @@ export const register: Register = (on, options) => {
     turn = 0
     // A headless run (-p, the SDK) has no one watching, and a quiet character says nothing: no model call.
     const c = await speaker($, isInteractive)
-    if (c) $.clock.after(0, () => say($, model, language, c, { moment: 'done', talk: conversation, facts }))
+    if (c) $.clock.after(0, () => say($, model, c, { moment: 'done', talk: conversation, facts }))
     return result
   }).catch(($, e, next) => next(e))
 
@@ -235,15 +234,15 @@ export const register: Register = (on, options) => {
       const isQuiet = !(await read($, quietAtom))
       await $.store.set('quiet', isQuiet)
       await update($, quietAtom, () => isQuiet)
-      return { text: isQuiet ? 'Quiet: the character is hidden and says nothing until /piposh quiet again.' : `${current?.name[language] ?? 'Your buddy'} is back.` }
+      return { text: isQuiet ? 'Quiet: the character is hidden and says nothing until /piposh quiet again.' : `${current?.name.he ?? 'Your buddy'} is back.` }
     }
     if (arg === 'help') return { text: HELP }
     if (arg === 'list') return { text: roster(id) }
-    if (!arg) return { text: current ? `${label(current, language)}\n\n${HELP}` : HELP }
+    if (!arg) return { text: current ? `${label(current)}\n\n${HELP}` : HELP }
     const next = arg === 'next' ? pick(Math.random, id) : findCharacter(arg)
     if (!next) return { text: `No character matches "${arg}".\n\n${HELP}` }
-    await meet($, next, language)
-    return { text: label(next, language) }
+    await meet($, next)
+    return { text: label(next) }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -251,7 +250,7 @@ export const register: Register = (on, options) => {
     const id = await read($, characterAtom)
     const character = CHARACTERS.find(c => c.id === id)
     if (!character || !FACES[character.id]) return next(e)
-    const view = { character, frame: await read($, frameAtom), bubble: await read($, bubbleAtom), language }
+    const view = { character, frame: await read($, frameAtom), bubble: await read($, bubbleAtom) }
     const els = $.ui.resolve(e)
     const ours = band(els, view, e.props.maxRows, e.props.bodyColumns, e.viewport?.isFullscreen === true, e.surface)
     // Another buddy's band (pokebuddy's) or the engine's own stays, under ours, so both can be on at once.
