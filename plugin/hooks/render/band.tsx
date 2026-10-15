@@ -1,11 +1,10 @@
 import type { Elements, RenderSurface } from 'claude-code'
 import type { Character } from '../characters'
 import { FACES } from '../data/faces.generated'
-import type { Language } from '../speech'
 import { faceRows, faceSize, faceSvg, type Run } from './face'
 
 /** What the band draws: who, which frame of their face (0 rests, others talk), and their last line. */
-export type BandView = { character: Character; frame: number; bubble: string | null; language: Language }
+export type BandView = { character: Character; frame: number; bubble: string | null }
 
 /** `Svg` off the terminal: the face is drawn as the game's own pixels there, not half-blocks. */
 export type BandElements = Pick<Elements['terminal'], 'Box' | 'Text'> & Partial<Pick<Elements['desktop'], 'Svg'>>
@@ -52,7 +51,7 @@ function drawRows({ Box, Text }: BandElements, rows: Run[][]) {
 export function band(els: BandElements, view: BandView, maxRows: number, columns: number, isFullscreen: boolean, surface: RenderSurface = 'terminal') {
   const { Box, Text } = els
   const { character, bubble } = view
-  const name = character.name[view.language]
+  const name = character.name.he
   const isApp = surface !== 'terminal' && els.Svg !== undefined
   const face = FACES[character.id]!
   const small = faceSize(face.small)
@@ -70,7 +69,7 @@ export function band(els: BandElements, view: BandView, maxRows: number, columns
         {bubble && (
           <Box key="bubble" flexDirection="row">
             <Box flexDirection="column"><Text> </Text><Text dimColor>◀</Text></Box>
-            <Box flexDirection="column" borderStyle="round" borderDimColor paddingX={1} width={width} alignItems={view.language === 'he' ? 'flex-end' : 'flex-start'}>
+            <Box flexDirection="column" borderStyle="round" borderDimColor paddingX={1} width={width} alignItems="flex-end">
               {wrapText(bubble, width - 4).map((l, i) => <Text key={`b${i}`} wrap="truncate-end">{l}</Text>)}
             </Box>
           </Box>

@@ -1,6 +1,3 @@
-/** The language the characters speak. */
-export type Language = 'he' | 'en'
-
 declare module 'claude-code' {
   interface PluginState {
     'piposh-buddy': {

@@ -1,6 +1,6 @@
 {
   "name": "piposh-buddy",
-  "version": "0.7.4",
+  "version": "0.8.0",
   "description": "A character from Guillotine's Piposh and Rating games above your prompt, reacting to your work in their own voice.",
   "author": { "name": "Yonatan Karp-Rudin", "url": "https://github.com/yonatankarp" },
   "homepage": "https://github.com/yonatankarp/piposh-buddy",
@@ -9,13 +9,6 @@
   "keywords": ["piposh", "rating", "guillotine", "buddy", "fun"],
   "types": "./types/index.d.ts",
   "userConfig": {
-    "language": {
-      "type": "string",
-      "title": "Language",
-      "description": "The language the characters speak: he (Hebrew, as in the games) or en (English, in the same voice).",
-      "options": ["he", "en"],
-      "default": "he"
-    },
     "speechModel": {
       "type": "string",
       "title": "Speech model",

@@ -19,7 +19,7 @@ const all = (n: unknown): Node[] => (typeof n === 'object' && n ? [n as Node, ..
 const textOf = (n: unknown): string => typeof n === 'string' ? n : ((n as Node).children ?? []).map(textOf).join('')
 
 const character = CHARACTERS.find(c => FACES[c.id])!
-const view: BandView = { character, frame: 0, bubble: 'אני רואה... אני רואה צרות!', language: 'he' }
+const view: BandView = { character, frame: 0, bubble: 'אני רואה... אני רואה צרות!' }
 
 describe('band', () => {
   test('a roomy terminal draws the face in half-blocks with the bubble beside it, and no name', () => {
@@ -39,12 +39,12 @@ describe('band', () => {
     }
   })
   test('the app draws the native face as an Svg, scaled to its height, whatever the room', () => {
-    const tree = band(appEls, { ...view, language: 'en' }, 10, 40, false, 'desktop')
+    const tree = band(appEls, view, 10, 40, false, 'desktop')
     const svg = all(tree).find(n => n.type === 'Svg')!
     expect(svg.props?.height).toBe(SVG_HEIGHT)
     expect(String(svg.props?.source)).toContain(`viewBox="0 0 ${FACES[character.id]!.big.w} ${FACES[character.id]!.big.h}"`)
-    expect(svg.props?.alt).toBe(character.name.en)
-    expect(textOf(tree)).not.toContain(character.name.en)
+    expect(svg.props?.alt).toBe(character.name.he)
+    expect(textOf(tree)).not.toContain(character.name.he)
   })
   test('the face and bubble, or the line alone, stand centered in the band', () => {
     for (const tree of [band(els, view, 80, 120, false), band(els, view, 20, 120, false), band(appEls, view, 10, 40, false, 'desktop')]) {
