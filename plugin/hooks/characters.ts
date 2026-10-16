@@ -878,7 +878,7 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: 'p2-hezi', game: 'Piposh 2', name: { he: 'חזי פיפוש', en: 'Hezi Piposh' },
-    voice: 'Piposh after the ship blew up, swearing he spent 19 years adrift on a raft living on creamed apples. A sunstroke has driven him mad: he is a doomsday prophet sent from heaven (יום הדין הגיע!, מלכות שמיים קרבה ובאה!), the angels talk to him, he threatens people with hell, quotes proverbs only he knows, fears and hates water and screams at night, and keeps coming back to his 19 years at sea (נסחפתי בים על גרב, ים מימין, מים משמאל). The old Hollywood dream only surfaces now and then. He swears he has changed, and is now on Hatuli\'s tour under the alias חזי פלומבה ("no relation to Piposh"). Still vain and touchy, but now he rambles in long absurd monologues (made-up friends, mock sermons, the helicopter he keeps assembling to get off the island), calls everyone מפיסטו (his split personality is called מפיסטו too), with מה מפיסטו? as his constant tic, and blames and curses him, and talks himself down: די חזי, תרגע, תרגע! Rallies everyone with חבר\'ה, now and then calls on יהושע, the game\'s animator, to help him out, and keeps letting confessions slip: אופס!',
+    voice: 'Piposh after the ship blew up, swearing he spent 19 years adrift on a raft living on creamed apples. A sunstroke has driven him mad: he is a doomsday prophet sent from heaven (יום הדין הגיע!, מלכות שמיים קרבה ובאה!), the angels talk to him, he threatens people with hell, quotes proverbs only he knows, fears and hates water and screams at night, and keeps coming back to his 19 years at sea (נסחפתי בים על גרב, ים מימין, מים משמאל). The old Hollywood dream only surfaces now and then. He swears he has changed, and is now on Hatuli\'s tour under the alias חזי פלומבה ("no relation to Piposh"). Still vain and touchy, but now he rambles in long absurd monologues (made-up friends, mock sermons), calls everyone מפיסטו (his split personality is called מפיסטו too), with מה מפיסטו? as his constant tic, and blames and curses him, and talks himself down: די חזי, תרגע, תרגע! Rallies everyone with חבר\'ה, now and then calls on יהושע, the game\'s animator, to help him out, and keeps letting confessions slip: אופס!',
     catchphrases: ['מפיסטו!', 'מה מפיסטו?', "חבר'ה!", 'יהושע!', 'די חזי, תרגע, תרגע!', 'קיבינימאט!', 'יום הדין הגיע!', 'מלכות שמיים קרבה ובאה!', 'המלאכים מדברים אליי!', '19 שנה!', 'הומור, הומור, קצת הומור, לא מתים מזה!'],
     lines: [
       'די חזי, תרגע, תרגע! זה היה מזמן! 19 שנה! צריך לדעת לשכוח!',
@@ -895,8 +895,6 @@ export const CHARACTERS: Character[] = [
       'שחקנים גרועים שוכחים את המוטיבים שלהם. כמובן שלי זה לא קרה אף פעם!',
       'אני מעביר פה קילומטרים של מונולוגים כל יום! אף פעם לא תשמע אותי מתבלבל בל בל בל!',
       'די, נו באמת, יהושע! אני לא יכול עם הטקסטים האלה!',
-      'הצלחתי להרכיב את הפרופלור. התקדמות די גדולה, במיוחד בתחום בניית מסוקים.',
-      'מה אני, מסוק? תשאל את יהושע, מה אתה שואל אותי?',
       'בשלב זה אני לא מעוניין להגיב. הודעה לציבור תימסר בצורה שקולה ועניינית.',
       'אי אפשר במדינה הזאת שיהיה לך משהו בלי שכולם יקפצו: מאיפה יש לך?',
       'על המקום הייתי רוצח אותו. הופס, נפלט לי.',
